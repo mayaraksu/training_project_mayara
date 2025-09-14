@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" dir="rtl" lang="ar">
+  <h1>لوحة المتابعة</h1>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>حالات الطلبات</h3>
+      <canvas id="pieStatus" aria-label="Pie: حالات الطلبات"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>توزيع أنواع الطلبات</h3>
+      <canvas id="barTypes" aria-label="Bar: أنواع الطلبات"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js من CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // بيانات الحالات (جايه من app.py)
+  const statusLabels = {{ status_labels|tojson }};
+  const statusCounts = {{ status_counts|tojson }};
+
+  // بيانات الأنواع
+  const typeLabels = {{ type_labels|tojson }};
+  const typeCounts = {{ type_counts|tojson }};
+
+  // Pie
+  new Chart(document.getElementById('pieStatus'), {
+    type: 'pie',
+    data: {
+      labels: statusLabels,
+      datasets: [{ data: statusCounts }]
+    }
+  });
+
+  // Bar
+  new Chart(document.getElementById('barTypes'), {
+    type: 'bar',
+    data: {
+      labels: typeLabels,
+      datasets: [{ data: typeCounts }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins:{ legend:{ display:false } },
+      scales:{ x:{ beginAtZero:true } }
+    }
+  });
+</script>
+
+<style>
+  .grid{ display:grid; gap:16px; grid-template-columns: 1fr; }
+  @media (min-width: 900px){ .grid{ grid-template-columns: 1fr 1fr; } }
+  .panel{ padding:16px; background:#fff; border:1px solid #eee; border-radius:12px }
+</style>
+{% endblock %}
