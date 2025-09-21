@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
+<<<<<<< HEAD
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>دخول المسؤول</title>
     <link rel="stylesheet"   href="{{url_for('static',filename='style-login.css')}}">
@@ -169,5 +170,120 @@
       <div class="footer">© وزارة البيئة والمياه والزراعة 2025</div>
     </div>
   </div>
+=======
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تسجيل الدخول</title>
+
+  <style>
+    :root{
+      --brand: {{ theme.brand if theme and theme.brand else "#1f6b57" }};
+      --card:#fff; --text:#222; --border:#e5e7eb; --muted:#6b7280;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:#fff;             /* الخلفية بيضاء */
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding:24px;
+    }
+
+    .login-wrap{ width:100%; max-width:420px; }
+
+    .login-logo{
+      display:block;
+      width:270px;
+      height:auto;
+      margin:0 auto 14px auto;
+    }
+
+    .login-card{
+      background:var(--card);       /* بوكس أبيض */
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:22px 18px;
+      box-shadow:0 4px 20px rgba(0,0,0,.05);  /* ظل خفيف */
+    }
+
+    h1{
+      margin:0 0 14px 0;
+      font-size:20px;
+      text-align:center;
+    }
+
+    .field{
+      width:100%;
+      margin:0 0 10px 0;
+    }
+    .input{
+      width:100%;
+      height:44px;
+      padding:0 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:#fff;
+      color:var(--text);
+      outline:0;
+    }
+    .input:focus{ border-color: var(--brand) }
+
+    .btn{
+      width:100%;
+      height:44px;
+      border-radius:10px;
+      border:1px solid var(--brand);
+      background:var(--brand);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px) }
+
+    /* الرسائل */
+    .flash{margin-bottom:10px; display:flex; gap:8px; align-items:center}
+    .flash .dot{width:8px;height:8px;border-radius:50%}
+    .ok .dot{background:#16a34a}
+    .bad .dot{background:#d32f2f}
+    .msg{font-size:13px; color:var(--muted)}
+  </style>
+</head>
+<body>
+
+  <div class="login-wrap">
+    <!-- الشعار فوق الصندوق -->
+    <img class="login-logo" src="{{ url_for('static', filename='logo6.png') }}" alt="شعار">
+
+    <!-- رسائل فلاش -->
+    {% with msgs = get_flashed_messages(with_categories=True) %}
+      {% if msgs %}
+        {% for cat, m in msgs %}
+          <div class="flash {{ 'ok' if cat=='ok' else 'bad' }}">
+            <span class="dot"></span>
+            <div class="msg">{{ m }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="login-card">
+      <h1>تسجيل الدخول</h1>
+
+      <form method="post" action="{{ url_for('login') }}">
+        <div class="field">
+          <input class="input" type="email" name="email" placeholder="البريد الإلكتروني" required />
+        </div>
+        <div class="field">
+          <input class="input" type="password" name="password" placeholder="كلمة المرور" required />
+        </div>
+        <button class="btn" type="submit">دخول</button>
+      </form>
+    </div>
+  </div>
+
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
 </body>
 </html>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<<<<<<< HEAD
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title or "نظام إدارة فحوص المياه" }}</title>
@@ -35,3 +36,148 @@
 {% endif %}
 </body>
 </html>
+=======
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ title or "نظام إدارة طلبات فحص المياه " }}</title>
+  <style>
+    :root{
+      --brand: {{ (theme.brand if theme and theme.brand else '#1f6b57') }};
+      --bg:#f7f7f8; --card:#fff; --text:#222; --muted:#6b7280; --border:#e5e7eb;
+      --ok:#16a34a; --bad:#d32f2f;
+    }
+    [data-theme="dark"]{
+      --bg:#0f1115; --card:#151821; --text:#f4f4f5; --muted:#a1a1aa; --border:#222531;
+      --ok:#22c55e; --bad:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:980px;margin:0 auto;padding:16px}
+    /* navbar */
+    .nav{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--border);z-index:10}
+    .nav .row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+    .brand{display:flex;align-items:center;gap:8px;font-weight:700;}
+    .brand img{width:28px;height:28px}
+    .project-title {font-size:20px;font-weight:700;color:#1f6b57;}
+    .center-title{flex:1;text-align:center;font-weight:700;color:#1f6b57}
+    .left-side{display:flex;align-items:center;gap:18px;}
+    .links{display:flex;gap:14px;align-items:center;}
+    .links a{position:relative;padding:6px 10px;text-decoration:none; color:inherit;font-weight:600;}
+    .links a:hover::after{content:""; position:absolute; left:0; bottom:-3px;width:100%;height:3px;background:#1f6b57;border-radius:2px;}
+    /* theme button */
+    .btn-theme{border:1px solid var(--border);background:var(--card);padding:6px 10px;border-radius:999px;cursor:pointer}
+    /* flash */
+    .flash-area{position:relative}
+    .flash{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;margin:12px 0;border:1px solid var(--border);background:var(--card);opacity:.98}
+    .flash.ok{border-color:var(--ok);box-shadow:0 4px 14px rgba(34,197,94,.18)}
+    .flash.bad{border-color:var(--bad);box-shadow:0 4px 14px rgba(239,68,68,.18)}
+    .flash .dot{width:10px;height:10px;border-radius:50%}
+    .flash.ok .dot{background:var(--ok)} .flash.bad .dot{background:var(--bad)}
+    /* cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin:28px 0}
+    /* responsive */
+    @media (max-width:700px){
+      .links{display:none}
+      .center-title{font-size:14px}
+    }
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.pending{background:#ffe7a0;color:#7a5a00}       /* معلّقة – أصفر فاتح */
+.badge.under_review{background:#cfe6ff;color:#104a82}  /* قيد المراجعة – أزرق فاتح */
+.badge.approved{background:#cfead9;color:#0f5a3d}      /* مقبولة – أخضر فاتح */
+.badge.rejected{background:#ffd0d6;color:#8a2532}      /* مرفوضة – وردي */
+
+      /* أزرار */
+.btn-green{border:1px solid var(--border); background:#1f6b57; color:#fff; padding:10px 16px; border-radius:10px; cursor:pointer}
+.btn-green:hover{filter:brightness(1.05)}
+.btn-red{border:1px solid var(--border); background:#e53935; color:#fff; padding:10px 16px; border-radius:10px; cursor:pointer}
+.btn-red:hover{filter:brightness(1.05)}
+
+/* حقول إدخال/قوائم */
+input[type="text"], select, textarea{
+  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:var(--card); color:var(--text)
+}
+select:hover, select:focus, input[type="text"]:focus, textarea:focus{
+  outline:none; background:#e9f7f1; /* أخضر فاتح */
+}
+
+/* علامة النجمة */
+.req-star{color:#e53935; margin:0 4px}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:780px){ .form-grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" aria-label="شريط التنقل">
+
+    <div class="row">
+      <!-- يمين: الشعار -->
+      <div class="brand">
+        <img src="{{ url_for('static', filename='logo7.png') }}" alt="شعار" />
+          <span class="project-title">نظام إدارة طلبات فحص المياه </span>
+      </div>
+
+      <!-- يسار: روابط -->
+        <div class="left-side">
+            <div class="links">
+        <a href="{{ url_for('home') }}">الرئيسية</a>
+        <a href="{{ url_for('add_request') }}">إضافة طلب</a>
+        <a href="{{ url_for('status_page') }}">حالة الطلب</a>
+        <a href="{{ url_for('archive') }}">الأرشيف</a>
+        <a href="{{ url_for('logout') }}">خروج</a>
+      </div>
+
+      <button id="themeToggle" class="btn-theme" aria-label="تبديل الوضع">🌗</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- رسائل فلاش -->
+    <div class="flash-area" aria-live="polite">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% if msgs %}
+          {% for cat, msg in msgs %}
+            <div class="flash {{ 'ok' if cat=='ok' else ('bad' if cat=='bad' or cat=='error' else '') }}">
+              <div class="dot"></div>
+              <div>{{ msg }}</div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <div class="footer">© {{ now().year }} وزارة البيئة والمياه والزراعة</div>
+  </div>
+
+  <script>
+    // إخفاء التنبيهات تلقائيًا
+    setTimeout(() => {
+      document.querySelectorAll('.flash').forEach(el=>{
+        el.style.transition='opacity .35s ease';
+        el.style.opacity='0';
+        setTimeout(()=>el.remove(), 400);
+      });
+    }, 1500);
+// تبديل الثيم + حفظ الاختيار
+    const root = document.documentElement;
+    const btn = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('theme');
+    if(saved==='dark'){ root.setAttribute('data-theme','dark'); btn.textContent='🌗'; }
+    btn.addEventListener('click', ()=>{
+      const dark = root.getAttribute('data-theme')==='dark';
+      if(dark){ root.removeAttribute('data-theme'); btn.textContent='🌗'; localStorage.setItem('theme','light'); }
+      else{ root.setAttribute('data-theme','dark'); btn.textContent='🌗'; localStorage.setItem('theme','dark'); }
+    });
+
+    // إخفاء الشريط في صفحات معينة (مثلاً login)
+    {% if hide_nav %}
+      document.querySelector('.nav').style.display='none';
+    {% endif %}
+  </script>
+</body>
+</html>
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb

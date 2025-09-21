@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}الأرشيف{% endblock %}
+{% block content %}
+
+<div class="card" aria-label="الأرشيف">
+  <h1 style="margin:0 0 8px">الأرشيف</h1>
+  <div class="sub">فلترة حسب الحي/النوع/الحالة أو رقم الطلب، ثم استعراض النتائج والرسوم.</div>
+
+  <!-- فلاتر البحث -->
+  <form method="get" action="{{ url_for('archive') }}"
+        style="display:grid;gap:12px;grid-template-columns:1fr 1fr;align-items:end;margin:12px 0">
+    <div>
+      <label class="lbl" for="q">الحي أو العنوان</label>
+      <input id="q" name="q" class="fld" type="text" value="{{ q or '' }}" placeholder="مثال: حي الياسمين">
+    </div>
+
+    <div>
+      <label class="lbl" for="req_type">نوع الطلب</label>
+      <select id="req_type" name="req_type" class="fld">
+        <option value="">كل الأنواع</option>
+        {% for t in req_types or [] %}
+          <option value="{{ t }}" {% if sel_req==t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="lbl" for="status">الحالة</label>
+      <select id="status" name="status" class="fld">
+        <option value="">كل الحالات</option>
+        <option value="pending"      {% if sel_status=='pending' %}selected{% endif %}>قيد الإنشاء</option>
+        <option value="under_review" {% if sel_status=='under_review' %}selected{% endif %}>قيد المراجعة</option>
+        <option value="approved"     {% if sel_status=='approved' %}selected{% endif %}>مقبول</option>
+        <option value="rejected"     {% if sel_status=='rejected' %}selected{% endif %}>مرفوض</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="lbl" for="rid">رقم الطلب</label>
+      <input id="rid" name="rid" class="fld" type="text" value="{{ rid or '' }}" placeholder="مثال: 125">
+    </div>
+
+    <div style="grid-column:1 / -1; display:flex; gap:8px; justify-content:flex-end">
+      <button type="submit" class="btn">بحث</button>
+      <a href="{{ url_for('archive') }}" class="btn-ghost">مسح البحث</a>
+    </div>
+  </form>
+
+  <!-- النتائج -->
+  <div class="card" style="margin-top:10px">
+    {% if items and items|length>0 %}
+      <ul class="list" style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px">
+        {% for r in items %}
+          <li class="card" style="margin:0;padding:12px">
+            <b>#{{ r.id }}</b> — {{ r.req_title or "بدون عنوان" }}
+            {% if r.req_details %}
+              <div class="sub" style="margin-top:4px">{{ r.req_details }}</div>
+            {% endif %}
+            <div class="sub">
+              النوع: {{ r.req_type }}
+              {% if r.district %} — الحي: {{ r.district }}{% endif %}
+              — الحالة: {{ r.req_status }}
+              {% if r.created_at %} — {{ r.created_at.strftime("%d-%m-%Y %H:%M") }}{% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p style="color:#777;text-align:center;margin:12px 0">لا توجد نتائج.</p>
+    {% endif %}
+  </div>
+
+  <!-- الرسوم البيانية -->
+  <div class="card" style="margin-top:16px">
+    <h2 style="margin:0 0 10px 0">الرسوم البيانية</h2>
+    <div class="grid-2">
+      <div>
+        <h3 style="margin:0 0 6px 0;font-size:16px">توزيع ملوحة المياه الجوفية</h3>
+        <canvas id="barSalinity" height="160"></canvas>
+      </div>
+      <div>
+        <h3 style="margin:0 0 6px 0;font-size:16px">إحصائية حالات الطلبات</h3>
+        <canvas id="pieStatus" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  // بيانات قادمة من app.py
+  const barLabels  = {{ (bar_labels  or [])|tojson }};
+  const barValues  = {{ (bar_values  or [])|tojson }};
+  const pieLabels  = {{ (pie_labels  or [])|tojson }};
+  const pieValues  = {{ (pie_values  or [])|tojson }};
+
+  // ألوان متناسقة مع الثيم
+  const brand = getComputedStyle(document.documentElement).getPropertyValue('--brand')?.trim() || '#1f6b57';
+const barColors = ['#1f6b57','#2aa67d','#4bc0c0','#9ad0c2','#cbdad1','#e1efe6'];
+  const pieColors = ['#1f6b57','#f0b429','#e85d75','#6c8ae4'];
+
+  // Bar: ملوحة
+  (function(){
+    const ctx = document.getElementById('barSalinity');
+    if(!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: barLabels,
+        datasets: [{
+          label: 'عدد العينات',
+          data: barValues,
+          backgroundColor: barLabels.map((_,i)=> barColors[i % barColors.length]),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display:false } },
+        scales: { y: { beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+  })();
+
+  // Pie: حالات الطلبات
+  (function(){
+    const ctx = document.getElementById('pieStatus');
+    if(!ctx) return;
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieValues,
+          backgroundColor: pieLabels.map((_,i)=> pieColors[i % pieColors.length]),
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position:'bottom' } }
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<<<<<<< HEAD
   <h2 style="text-align:center;margin:0 0 18px">إضافة طلب</h2>
 
   <div class="card">
@@ -23,10 +24,31 @@
           <option value="">— اختر —</option>
           {% for rt in req_types %}
             <option value="{{ rt }}" {% if form.req_type==rt %}selected{% endif %}>{{ rt }}</option>
+=======
+
+<h2 style="text-align:center;margin:0 0 18px">إضافة طلب جديد</h2>
+
+<div class="card">
+  <p style="margin-top:0;color:var(--muted)">أكملي البيانات التالية ثم اضغطي <b>إرسال</b></p>
+
+  <form id="addForm" method="post" action="{{ url_for('add_request') }}" enctype="multipart/form-data">
+    <input type="hidden" name="title" id="titleHidden">
+
+    <div class="form-grid">
+
+      <!-- نوع الطلب -->
+      <div>
+        <label>نوع الطلب <span class="req-star">*</span></label>
+        <select name="req_type" id="req_type" required>
+          <option value="">اختر النوع</option>
+          {% for t in req_types %}
+            <option value="{{ t }}">{{ t }}</option>
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
           {% endfor %}
         </select>
       </div>
 
+<<<<<<< HEAD
       <div>
         <label>الحي</label>
         <input type="text" name="district" placeholder="مثل: حي الياسمين"
@@ -58,3 +80,104 @@
     * بعد الحفظ ستتحدّث لوحة “الرئيسية” تلقائيًا، وستظهر القيم في الرسوم البيانية.
   </p>
 {% endblock %}
+=======
+      <!-- الحي + خيار "أخرى" -->
+      <div>
+        <label>الحي <span class="req-star">*</span></label>
+        <select id="district_select">
+          <option value="">اختر الحي</option>
+          <option value="الريان">الريان</option>
+          <option value="الياسمين">الياسمين</option>
+          <option value="الروابي">الروابي</option>
+          <option value="الملقى">الملقى</option>
+          <option value="الندى">الندى</option>
+          <option value="other">أخرى</option>
+        </select>
+        <input type="text" id="district_other" placeholder="اكتب اسم الحي" style="display:none;margin-top:8px;width:100%">
+        <input type="hidden" name="district" id="district_final">
+      </div>
+
+      <!-- فئة الملوحة -->
+      <div>
+        <label>فئة الملوحة (اختياري)</label>
+        <select name="salt_cat" id="salt_cat">
+          <option value="">غير مختبر</option>
+          <option value="منخفضة">منخفضة</option>
+          <option value="متوسطة">متوسطة</option>
+          <option value="مرتفعة">مرتفعة</option>
+        </select>
+      </div>
+
+      <!-- مرفق -->
+      <div>
+        <label>مرفق (اختياري)</label>
+        <input type="file" name="attachment" accept=".jpg,.jpeg,.png,.pdf">
+      </div>
+
+      <!-- تفاصيل الطلب -->
+      <div style="grid-column:1/-1">
+        <label>تفاصيل الطلب (اختياري)</label>
+        <textarea name="details" rows="4" maxlength="300" placeholder="اكتبي التفاصيل هنا"></textarea>
+        <div style="font-size:12px;color:var(--muted)">أقصى عدد أحرف: 300</div>
+      </div>
+
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:18px">
+      <button type="submit" class="btn-green">إرسال</button>
+      <a href="{{ url_for('home') }}" class="btn-red" style="text-align:center;display:inline-block">إلغاء</a>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+  const form = document.getElementById('addForm');
+  const typeSel = document.getElementById('req_type');
+  const distSel = document.getElementById('district_select');
+  const distOther = document.getElementById('district_other');
+  const distFinal = document.getElementById('district_final');
+  const titleHidden = document.getElementById('titleHidden');
+
+  // تبديل حقل "أخرى"
+  distSel.addEventListener('change', ()=>{
+    if(distSel.value === 'other'){
+      distOther.style.display = 'block';
+      distOther.focus();
+    } else {
+      distOther.style.display = 'none';
+      distOther.value = '';
+    }
+    updateDistrict();
+  });
+
+  distOther.addEventListener('input', updateDistrict);
+
+  function updateDistrict(){
+    let val = distSel.value;
+    if(val === 'other') val = distOther.value.trim();
+    distFinal.value = val;
+    buildTitle();
+  }
+
+  function buildTitle(){
+    const t = typeSel.value.trim();
+    const d = distFinal.value.trim();
+    titleHidden.value = (t && d) ? ${t} - حي ${d} : (t || d);
+  }
+
+  typeSel.addEventListener('change', buildTitle);
+
+  form.addEventListener('submit', (e)=>{
+    updateDistrict();
+    if(!typeSel.value || !distFinal.value){
+      e.preventDefault();
+      alert('الرجاء اختيار نوع الطلب والحي.');
+    }
+  });
+})();
+</script>
+
+{% endblock %}
+
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb

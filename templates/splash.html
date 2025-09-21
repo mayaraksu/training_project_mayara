@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+<<<<<<< HEAD
   <title>مرحبا بك…</title>
+=======
+  <title>جاري التحميل…</title>
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
   <style>
     html,body{height:100%;margin:0}
     body{display:flex;align-items:center;justify-content:center;font-family:system-ui,Segoe UI,Arial;background:#fff}
@@ -13,15 +17,24 @@
     @keyframes fade{to{opacity:1}}
   </style>
   <script>
+<<<<<<< HEAD
     setTimeout(function () {
     window.location.href = "{{ url_for('auth_choose') }}";
   }, 1600);
+=======
+    // بعد 1.8 ثانية يروح للّوج إن لو ما فيه جلسة
+    setTimeout(()=>{ location.href = "/login"; }, 1800);
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
   </script>
 </head>
 <body>
   <div class="box">
     <img class="logo" src="{{ url_for('static', filename='logo6.png') }}" alt="شعار" />
+<<<<<<< HEAD
     <div class="muted">مرحبا بك…</div>
+=======
+    <div class="muted">جاري التحميل…</div>
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
   </div>
 </body>
 </html>

@@ -21,4 +21,8 @@ def main():
             print("✓ تم تحديث المستخدم:", email)
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     main()
+=======
+    main()
+>>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
