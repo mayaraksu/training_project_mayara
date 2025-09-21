@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}بوابة العملاء{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style-customer.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <style>
+    /* لمسات سريعة */
+    :root{ --brand:#0f5f28; --muted:#888; }
+    html.dark { filter: invert(1) hue-rotate(180deg); }
+    body{ font-family: system-ui, sans-serif; background:#fff; color:#222; margin:0 }
+    .customer-navbar{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 16px; border-bottom:1px solid #eee; position:sticky; top:0; background:#fff; z-index:50}
+    .nav-left{display:flex; align-items:center; gap:10px}
+    .nav-right{display:flex; align-items:center; gap:16px}
+    .brand{display:flex; align-items:center; gap:8px; font-weight:700; color:#0f5f28}
+    .brand img{width:28px; height:28px}
+    .nav-icon-btn{background:transparent; border:0; cursor:pointer; font-size:18px; position:relative}
+    .badge{position:absolute; top:-6px; left:-6px; min-width:16px; height:16px; border-radius:999px; background:#c00; color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; padding:0 4px}
+    .nav-link{color:#333; text-decoration:none}
+    .nav-link.active{color:var(--brand); font-weight:700}
+    .nav-spacer{flex:1}
+    .nav-right a, .nav-right form button{font-size:14px}
+
+    /* بانل الإشعارات */
+    .notif-panel{position:absolute; right:16px; top:52px; width:320px; max-height:60vh; overflow:auto; background:#fff; border:1px solid #e8e8e8; box-shadow:0 10px 24px rgba(0,0,0,.08); border-radius:12px; padding:10px; display:none}
+    .notif-item{padding:8px 6px; border-bottom:1px dashed #eee}
+    .notif-item:last-child{border-bottom:0}
+    .notif-empty{padding:16px; text-align:center; color:var(--muted)}
+    /* محتوى الصفحة */
+    main{padding:18px}
+    /* الفوتر */
+    footer{margin-top:40px; border-top:1px solid #eee; padding:16px; color:#444}
+    .foot-wrap{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; align-items:center}
+    .foot-social{display:flex; align-items:center; gap:10px; justify-content:center}
+    .foot-social a{color:#111; text-decoration:none; font-size:18px}
+    .foot-right{justify-self:end; text-align:end}
+    @media (max-width: 768px){
+      .foot-wrap{grid-template-columns:1fr; text-align:center}
+      .foot-right{justify-self:center}
+    }
+  </style>
+</head>
+<body class="{{ body_class|default('') }}">
+
+  <nav class="customer-navbar">
+    <div class="nav-left">
+      <a class="brand nav-link" href="{{ url_for('customer_home') }}">
+        <img src="{{ url_for('static', filename='logonum1.png') }}" alt="logo">
+        <span>نظام إدارة فحوص المياه</span>
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <!-- روابط الشريط -->
+      <a class="nav-link {% if request.endpoint=='customer_home' %}active{% endif %}" href="{{ url_for('customer_home') }}">الرئيسية</a>
+      <a class="nav-link {% if request.endpoint=='customer_request_new' %}active{% endif %}" href="{{ url_for('customer_request_new') }}">إضافة طلب</a>
+      <a class="nav-link {% if request.endpoint=='customer_requests_status' %}active{% endif %}" href="{{ url_for('customer_requests_status') }}">حالة الطلب</a>
+      <a class="nav-link {% if request.endpoint=='customer_archive' %}active{% endif %}" href="{{ url_for('customer_archive') }}">الأرشيف</a>
+      <a class="nav-link {% if request.endpoint=='customer_account' %}active{% endif %}" href="{{ url_for('customer_account') }}">حسابي</a>
+
+      <span class="nav-spacer"></span>
+
+      <!-- زر الإشعارات -->
+      <div style="position:relative">
+        <button id="btnNotifs" class="nav-icon-btn" aria-haspopup="true" aria-expanded="false" title="الإشعارات">
+          <i class="fa-regular fa-bell"></i>
+          {% if notifications and notifications.count %}
+            <span class="badge">{{ notifications.
+count }}</span>
+          {% endif %}
+        </button>
+
+        <div id="notifPanel" class="notif-panel" role="menu" aria-labelledby="btnNotifs">
+          {% if notifications and notifications.list %}
+            {% for n in notifications.list %}
+              <div class="notif-item">
+                <div style="font-weight:600">{{ n.title }}</div>
+                <div style="font-size:12px;color:var(--muted)">{{ n.time }}</div>
+                {% if n.text %}<div style="margin-top:6px">{{ n.text }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="notif-empty">لا توجد إشعارات حالياً</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- زر الدارك مود -->
+      <button id="btnDark" class="nav-icon-btn" title="الوضع الداكن"><i class="fa-regular fa-moon"></i></button>
+
+      <!-- خروج -->
+      <form method="post" action="{{ url_for('customer_logout') }}" style="display:inline">
+        <button type="submit" class="nav-icon-btn" title="خروج"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </form>
+    </div>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+
+  <script>
+    // ===== إشعارات: فتح/إغلاق =====
+    (function(){
+      const btn = document.getElementById('btnNotifs');
+      const panel = document.getElementById('notifPanel');
+      if(!btn || !panel) return;
+      btn.addEventListener('click', () => {
+        const open = panel.style.display === 'block';
+        panel.style.display = open ? 'none' : 'block';
+        btn.setAttribute('aria-expanded', String(!open));
+      });
+      document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) {
+          panel.style.display = 'none';
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
+
+    // ===== دارك مود =====
+    (function(){
+      const KEY = 'wt-dark';
+      const html = document.documentElement;
+      function apply(val){ val ? html.classList.add('dark') : html.classList.remove('dark'); }
+      apply(localStorage.getItem(KEY) === '1');
+      const btn = document.getElementById('btnDark');
+      if(btn){
+        btn.addEventListener('click', () => {
+          const on = !html.classList.contains('dark');
+          apply(on);
+          localStorage.setItem(KEY, on ? '1' : '0');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

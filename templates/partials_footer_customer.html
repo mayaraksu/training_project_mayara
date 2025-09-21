@@ -1,0 +1,89 @@
+<!-- Footer bar -->
+<footer class="footer-bar">
+  <div class="footer-content">
+
+    <div class="footer-section">
+      <h4>نظرة عامة</h4>
+      <hr>
+      <a href="{{ url_for('terms') }}">شروط الاستخدام</a>
+      <a href="{{ url_for('privacy') }}">سياسة الخصوصية</a>
+    </div>
+
+    <div class="footer-section">
+      <h4>المساعدة والدعم</h4>
+      <hr>
+      <a href="{{ url_for('faq') }}">الأسئلة الشائعة</a>
+      <a href="{{ url_for('complaints') }}">تقديم شكوى</a>
+      <a href="tel:939">اتصل بنا (939)</a>
+    </div>
+
+    <div class="footer-section">
+      <h4>تواصل معنا</h4>
+      <hr>
+     <div class="social-icons">
+  <a href="https://twitter.com/MEWA_KSA" target="_blank">
+    <i class="fab fa-twitter"></i>
+  </a>
+  <a href="https://www.instagram.com/mewa_ksa" target="_blank">
+    <i class="fab fa-instagram"></i>
+  </a>
+</div>
+
+<div class="footer-brand">
+  <img src="{{ url_for('static', filename='logonum1.png') }}" alt="شعار الوزارة">
+  <span>© وزارة البيئة والمياه والزراعة 2025</span>
+</div>
+    </div>
+
+  </div>
+</footer>
+    <style>
+.footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background:#f9f9f9;
+  border-top:1px solid #ddd;
+  padding:20px 0;
+  text-align:center;
+  z-index: 10;
+}
+
+.footer-container {
+  display:flex;
+  justify-content:space-around;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  width:100%;
+}
+
+.footer-section h4,
+.footer-section a,
+.footer-logo {
+  color:#000;   /* النصوص بالأسود */
+  font-size:14px;
+  text-decoration:none;
+}
+
+.footer-section a:hover {
+  text-decoration:underline;
+}
+
+.footer-section ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+}
+
+.footer-section li {
+  margin:4px 0;
+}
+
+.social-links {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+</style>
+</div>

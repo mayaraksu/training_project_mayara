@@ -1,0 +1,79 @@
+/* customer.css — خاص بدخول العملاء فقط */
+.customer-auth {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(1200px 600px at 80% 10%, rgba(255,255,255,.15), transparent 60%),
+    radial-gradient(900px 500px at 20% 90%, rgba(255,255,255,.08), transparent 60%);
+  backdrop-filter: blur(2px);
+}
+
+.customer-auth .auth-card {
+  width: min(520px, 92vw);
+  margin: 48px auto;
+  padding: 24px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.18);
+  box-shadow: 0 10px 30px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.35);
+  border: 1px solid rgba(255,255,255,.35);
+}
+
+.customer-auth .title {
+  text-align: center;
+  margin: 8px 0 12px;
+  font-weight: 700;
+}
+
+.customer-auth label {
+  display: block;
+  font-size: 14px;
+  color: rgba(0,0,0,.6);
+  margin: 10px 0 6px;
+}
+
+.customer-auth input[type="text"],
+.customer-auth input[type="email"],
+.customer-auth input[type="password"],
+.customer-auth input[type="tel"]{
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.6);
+  padding: 0 12px;
+  outline: none;
+  transition: box-shadow .2s, transform .05s;
+}
+
+.customer-auth input:focus{
+  box-shadow: 0 0 0 3px rgba(16,185,129,.25);
+}
+
+.customer-auth .actions{
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.customer-auth .btn{
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.customer-auth .btn-primary{
+  background: linear-gradient(180deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(5,150,105,.25);
+}
+
+.customer-auth .btn-ghost{
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(0,0,0,.08);
+  color: #0f172a;
+}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% set body_class= "auth-choose-page"%}
+{% block content %}
+
+<style>
+  body{
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  .auth-wrap{
+    flex:1;
+    display:grid;
+    place-items:center;
+    padding:30px 16px 80px;
+  }
+  .auth-card{
+    width:min(560px,94vw);
+    background:rgba(255,255,255,.55);
+    border:1px solid rgba(255,255,255,.42);
+    border-radius:16px;
+    padding:22px 20px 18px;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 24px 48px rgba(16,24,40,.08);
+    text-align:center;
+  }
+  .auth-card .logo-wrap{
+    width:64px;height:64px;margin:-8px auto 10px;
+    border-radius:50%;
+    overflow:hidden;
+    background:radial-gradient(80% 80% at 50% 30%,#ffffff40 0%,#ffffff05 80%);
+    box-shadow:0 6px 16px rgba(0,0,0,.08) inset,0 4px 10px rgba(16,24,40,.08);
+    display:grid;place-items:center;
+  }
+  .auth-card .logo-wrap img{width:100%;height:100%;object-fit:cover;}
+  .auth-card h2{font-size:18px;margin:4px 0 12px;}
+  .auth-card .tabs{display:flex;gap:10px;justify-content:center;margin-bottom:10px;}
+  .btn{border-radius:999px;padding:8px 14px;font-size:14px;border:0;cursor:pointer;}
+  .btn-admin{
+    min-width:190px;
+    background:linear-gradient(90deg,#0f9d58,#0c7f49);
+    color:#fff;
+    box-shadow:0 6px 18px rgba(15,157,88,.25);
+  }
+  .btn-customer{
+    min-width:140px;
+    background:rgba(255,255,255,.35);
+    color:#1f2937;
+    border:1px solid rgba(15,118,110,.18);
+    box-shadow:0 6px 18px rgba(2,8,23,.08);
+  }
+  .hint{font-size:12px;color:#64748b;margin-top:10px;}
+  .hint a{color:#0f766e;text-decoration:none;}
+  .hint a:hover{text-decoration:underline;}
+
+  /* ===== Footer bar ===== */
+  .footer-bar{
+    background:rgba(255,255,255,.55);
+    border-top:1px solid rgba(0,0,0,.06);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    padding:12px 20px;
+    text-align:center;
+  }
+  .footer-logo{
+    display:inline-block;
+    width:26px;height:26px;
+    vertical-align:middle;
+    margin-left:6px;
+  }
+  .footer-links{
+    margin-top:8px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+  }
+  .footer-links a{
+    display:inline-block;
+    padding:6px 12px;
+    font-size:13px;
+    color:#0f766e;
+    background:rgba(236,253,245,.6);
+    border:1px solid rgba(15,118,110,.18);
+    border-radius:999px;
+    text-decoration:none;
+  }
+  .footer-links a:hover{background:rgba(236,253,245,.95);}
+
+</style>
+
+<div class="page-wrap">
+<main class="auth-choose">
+ <section class="auth-card glass">
+  <div class="logo-box">
+    <img src="{{ url_for('static', filename='logonum1.png') }}"
+         alt="شعار"
+         class="logo-ring">
+  </div>
+
+  <h2 class="title">اختيار نوع الدخول</h2>
+
+  <div class="actions row">
+    <a href="{{ url_for('customer_login') }}" class="btn btn-ghost">دخول العملاء</a>
+    <a href="{{ url_for('admin_login') }}" class="btn btn-primary">دخول المسؤولين</a>
+  </div>
+
+  <p class="hint">
+    عميل جديد؟ <a href="{{ url_for('customer_signup') }}">أنشئ حسابًا</a>
+  </p>
+</section>
+</main>
+<!-- Footer bar -->
+<footer class="footer-bar">
+  <div class="footer-content">
+
+    <div class="footer-section">
+      <h4>نظرة عامة</h4>
+      <hr>
+      <a href="{{ url_for('terms') }}">شروط الاستخدام</a>
+      <a href="{{ url_for('privacy') }}">سياسة الخصوصية</a>
+    </div>
+
+    <div class="footer-section">
+      <h4>المساعدة والدعم</h4>
+      <hr>
+      <a href="{{ url_for('faq') }}">الأسئلة الشائعة</a>
+      <a href="{{ url_for('complaints') }}">تقديم شكوى</a>
+      <a href="tel:939">اتصل بنا (939)</a>
+    </div>
+
+    <div class="footer-section">
+      <h4>تواصل معنا</h4>
+      <hr>
+     <div class="social-icons">
+  <a href="https://twitter.com/MEWA_KSA" target="_blank">
+    <i class="fab fa-twitter"></i>
+  </a>
+  <a href="https://www.instagram.com/mewa_ksa" target="_blank">
+    <i class="fab fa-instagram"></i>
+  </a>
+</div>
+
+<div class="footer-brand">
+  <img src="{{ url_for('static', filename='logonum1.png') }}" alt="شعار الوزارة">
+  <span>© وزارة البيئة والمياه والزراعة 2025</span>
+</div>
+    </div>
+
+  </div>
+</footer>
+</div>
+{% endblock %}

@@ -1,0 +1,547 @@
+/* ===============================
+   القاعدة الأساسية لكل صفحات الدخول
+=================================*/
+.auth-choose-page,
+.customer-login-page,
+.admin-login-page {
+    position: relative;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+   /* overflow: hidden;*/
+    background: transparent;
+}
+
+/* -------------------------------
+   الخلفية (قبل) لكل الصفحات
+--------------------------------*/
+.auth-choose-page::before,
+.customer-login-page::before,
+.admin-login-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+  linear-gradient(180deg, rgba(246,251,248,0.7) 0%, rgba(255,255,255,0.85) 55%),
+  url("/static/backg.png") center/cover no-repeat;
+}
+
+/* -------------------------------
+   إزالة الضباب/الطبقة الزائدة
+--------------------------------*/
+.auth-choose-page::after,
+.customer-login-page::after,
+.admin-login-page::after {
+    content: none;
+}
+
+/* ===============================
+   تصميم الكارد (Glassmorphism)
+=================================*/
+.auth-card {
+    width: 550px;
+    margin: auto;
+    padding: 36px 28px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.28);   /* خلفية شفافة قليلاً */
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+/* ------------------------------
+/* -------------------------------
+   النصوص والأزرار داخل الكارد
+--------------------------------*/
+.auth-card h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: #333;
+}
+
+.auth-card .btn {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border-radius: 8px;
+    background: #006c3a;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.auth-card .btn:hover {
+    background: #005a2f;
+}
+
+.auth-card .hint {
+    font-size: 14px;
+    color: #666;
+    margin-top: 14px;
+}
+/* ===============================
+   الفوتر (اختياري)
+=================================*/
+.auth-choose .auth-card {
+  max-width: 620px;
+  padding: 24px 28px;
+}
+
+
+
+/* صف الأزرار: نفس مقاس أزرار الدخول/الرجوع في الشاشات الأخرى */
+.auth-choose .actions.row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.auth-choose .actions .btn {
+  flex: 1;
+  height: 42px;               /* نفس ارتفاع “دخول/رجوع” */
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 42px;
+  text-decoration:none;
+}
+
+/* زر المسؤولين (أخضر أساسي) */
+.auth-choose .actions .btn-primary {
+  background: #216c3a;        /* أخضر الوزارة */
+  color: #fff;
+  border: 1px solid rgba(0,0,0,.05);
+}
+
+/* زر العملاء (أبيض بظل ليبرز) */
+.auth-choose .actions .btn-ghost {
+  background: #fff;
+  color: #1b4d2b;
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 6px 22px rgba(0,0,0,.08);
+}
+
+/* تباعد بسيط تحت العنوان */
+.auth-choose .title { margin-bottom: 6px; }
+/* إزالة أي خط تحت الأزرار */
+.auth-choose .actions .btn,
+.auth-choose .actions .btn a { text-decoration: none !important; }
+
+.auth-card {
+  overflow: visible !important;
+  padding-top: 60px;   /* مساحة فوق للشعار */
+  position: relative;
+}
+.auth-card {
+  max-width: 620px;
+  margin: 64px auto;
+  padding: 64px 28px 28px;
+  position: relative;
+  overflow: visible !important;
+}
+
+.logo-box {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.logo-ring {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid #d4af37;
+  box-shadow: 0 0 4px rgba(0,0,0,0.18);
+  background: #fff;
+  object-fit: cover;
+  display: inline-block;
+}
+
+.auth-card{
+  position: relative;
+  padding-top: 50px;  /* مساحة تحت الشعار */
+}
+
+/* مكان الشعار */
+.auth-card .logo-box{
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -65%); /* رفع الشعار فوق أكثر */
+  z-index: 2;
+}
+
+/* صورة الشعار */
+.auth-card .logo-ring {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: none;          /* شيل الإطار الذهبي */
+  box-shadow: none;      /* شيل أي ظل */
+  background: transparent;
+}
+
+/* الحقول */
+
+
+/* الأزرار */
+.auth-card .buttons {
+  display: flex;
+  justify-content: flex-end;   /* يخليهم يمين */
+  gap: 14px;                   /* مسافة بينهم */
+  margin-top: 18px;
+}
+
+.auth-card .btn-submit,
+.auth-card .btn-back {
+  min-width: 120px;       /* عرض ثابت */
+  padding: 12px 0;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.auth-card .btn-submit {
+  background-color: #0f6c2f;
+  color: #fff;
+  border: none;
+}
+
+.auth-card .btn-back {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.auth-card .btn-back:hover {
+  background-color: #f5f5f5;
+}
+.auth-card input[type="full_name"],
+.auth-card input[type="email"],
+.auth-card input[type="password"] {
+  background-color: #fff;       /* أبيض */
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 0 4px rgba(0,0,0,0.08);
+}
+
+
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end; /* خليهم يمين */
+}
+
+.btn-back,
+.btn-submit {
+  flex: 1;              /* نفس العرض */
+  padding: 12px;
+  font-size: 16px;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none; /* يشيل الخط تحت رجوع */
+}
+
+.btn-back {
+  background: #fff;
+  border: 1px solid #ccc;
+  color: #333;
+}
+
+
+
+.customer-signup-page {
+  background: linear-gradient(180deg, rgba(246,251,248,0.8), rgba(255,255,255,0.85)),
+              url("/static/backq.png") center/cover no-repeat;
+  min-height: 100vh;
+}
+
+.auth-card input[type="text"],
+.auth-card input[type="email"],
+.auth-card input[type="password"]{
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:8px;
+  padding:10px 12px;
+  height:44px;
+  width:100%;
+  box-sizing:border-box;
+  font-size:16px;
+}
+
+/* تأكيد خاص لحقل الاسم الكامل لو فيه تعارض */
+.auth-card input[name="full_name"]{
+  display:block;
+  width:100% !important;
+  height:44px !important;
+  padding:10px 12px !important;
+} /* توحيد شكل الحقول في صفحات الدخول/التسجيل */
+.auth-card input[type="text"],
+.auth-card input[type="email"],
+.auth-card input[type="password"]{
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:8px;
+  padding:10px 12px;
+  height:44px;
+  width:100%;
+  box-sizing:border-box;
+  font-size:16px;
+}
+
+/* تأكيد خاص لحقل الاسم الكامل لو فيه تعارض */
+.auth-card input[name="full_name"]{
+  display:block;
+  width:100% !important;
+  height:44px !important;
+  padding:10px 12px !important;
+}
+/* ===== Footer Bar ===== */
+.footer-bar{
+  margin-top: 28px;
+  padding: 16px 18px;
+  background: rgba(255,255,255,.22);
+  border-top: 1px solid rgba(0,0,0,.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px 16px 0 0;
+}
+
+.footer-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.footer-bar h4{
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: #2b2b2b;
+}
+
+.footer-list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.footer-list li{ margin: 6px 0; }
+
+.footer-bar a{
+  color: #135f32;               /* أخضر الوزارة */
+  text-decoration: none;
+}
+.footer-bar a:hover{ text-decoration: underline; }
+
+/* أزرار السوشيال */
+.socials{ display: flex; gap: 10px; margin-top: 6px; }
+.social-btn{
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #dfe8e1;
+  background: #fff;
+  color: #135f32;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.social-btn:hover{ filter: brightness(.98); }
+
+/* الشريط السفلي للحقوق */
+.footer-copy{
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14px;
+  color: #2b2b2b;
+  opacity: .9;
+}
+
+/* استجابة للجوال */
+@media (max-width: 768px){
+  .footer-grid{ grid-template-columns: 1fr; }
+}
+.footer-bar {
+  width: 100%;
+  background: #fff;
+  border-top: 1px solid #ddd;
+  padding: 20px 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.footer-section {
+  flex: 1 1 250px;
+  margin: 10px;
+}
+
+.footer-section h4 {
+  margin-bottom: 6px;
+  font-size: 16px;
+  color: #333;
+}
+
+.footer-section hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  width: 60%;
+  margin: 6px auto 12px;
+}
+
+.footer-section a {
+  display: block;
+  margin: 4px 0;
+  color: #333;
+  text-decoration: none;
+}
+
+.footer-section a:hover {
+  text-decoration: underline;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.social-icons a {
+  font-size: 22px;
+  color: #333;
+}
+
+/* الشعار والنص في خط واحد */
+.footer-bar .footer-brand {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #333;
+}
+
+.footer-bar .footer-brand img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: block;
+}
+.customer-login-page .hero,
+.customer-login-page .hero-logo,
+.customer-login-page .big-logo,
+.customer-login-page .splash,
+.customer-login-page .header,
+.customer-login-page .site-brand,
+.customer-login-page .nav,
+.customer-login-page .navbar,
+.customer-login-page .page-title,
+.customer-login-page .dashboard,
+.customer-login-page .sidebar,
+.customer-login-page .brand-badge,
+.customer-login-page .logo-big,
+.customer-login-page .top-banner,
+.customer-login-page .masthead,
+.customer-login-page .page-wrap > .logo,
+.customer-signup-page .hero,
+.customer-signup-page .hero-logo,
+.customer-signup-page .big-logo,
+.customer-signup-page .splash,
+.customer-signup-page .header,
+.customer-signup-page .site-brand,
+.customer-signup-page .nav,
+.customer-signup-page .navbar,
+.customer-signup-page .page-title,
+.customer-signup-page .dashboard,
+.customer-signup-page .sidebar,
+.customer-signup-page .brand-badge,
+.customer-signup-page .logo-big,
+.customer-signup-page .top-banner,
+.customer-signup-page .masthead,
+.customer-signup-page .page-wrap > .logo {
+  display: none !important;
+}
+
+/* تأكيد أن الكارد هو اللي فوق وكل الخلفية وراه */
+.customer-login-page,
+.customer-signup-page {
+  position: relative;
+  min-height: 100vh;
+}
+
+.customer-login-page .auth-card,
+.customer-signup-page .auth-card {
+  position: relative;
+  z-index: 10;
+}
+
+/* الخلفية الموحدة (إن احتجت) */
+.customer-login-page::before,
+.customer-signup-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(246,251,248,.70) 0%, rgba(255,255,255,.85) 55%),
+    url("/static/backg.png") center/cover no-repeat;
+  filter: saturate(.95) contrast(.98);
+  pointer-events: none;
+}
+
+.auth-choose-page .hero,
+.auth-choose-page .hero-logo,
+.auth-choose-page .big-logo,
+.auth-choose-page .splash,
+.auth-choose-page .header,
+.auth-choose-page .site-brand,
+.auth-choose-page .nav,
+.auth-choose-page .navbar,
+.auth-choose-page .page-title,
+.auth-choose-page .dashboard,
+.auth-choose-page .sidebar,
+.auth-choose-page .brand-badge,
+.auth-choose-page .logo-big,
+.auth-choose-page .top-banner,
+.auth-choose-page .masthead,
+.auth-choose-page .page-wrap > .logo {
+  display: none !important;
+}
+.auth-card .btn.btn-submit,
+.auth-card button.btn-submit {
+  background-color: #1f6e3b !important;
+  color: #fff !important;
+  border: 1px solid #1f6e3b !important;
+}
+
+.auth-card .btn.btn-submit:hover,
+.auth-card button.btn-submit:hover {
+  background-color: #145428 !important;
+  border-color: #145428 !important;
+}
+
+/* خَلّي زر الرجوع أبيض بشكل صريح عشان ما يتأثر */
+.auth-card .btn-back {
+  background-color: #fff !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+}

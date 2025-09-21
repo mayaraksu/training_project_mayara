@@ -1,0 +1,109 @@
+{% extends "customer_base.html" %}
+{% set body_class = "customer-home-page" %}
+
+{% block title %}الرئيسية{% endblock %}
+
+{% block content %}
+<div class="dashboard" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+  <section class="card">
+    <div class="card-head" style="justify-content: space-between; align-items:center;">
+      <h3 style="margin:0">آخر الطلبات</h3>
+      <a class="link" href="{{ url_for('customer_requests_status') }}">عرض الكل</a>
+    </div>
+
+    <div class="stats-strip" dir="rtl">
+      <div class="stat">
+        <div class="stat-title">إجمالي الطلبات</div>
+        <div class="stat-number">{{ counts.total }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">تحت المراجعة</div>
+        <div class="stat-number">{{ counts.under_review }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">مقبولة</div>
+        <div class="stat-number">{{ counts.approved }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">مرفوضة</div>
+        <div class="stat-number">{{ counts.rejected }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- بطاقة توزيع الحالات (الدونات و/أو الليجند) -->
+<div class="card card-list">
+  <div class="card-head">
+    <h3>توزيع الحالات</h3>
+  </div>
+  <div class="card-body" style="text-align:center; min-height:300px;">
+    <canvas id="statusChart" style="max-height:200px;"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // القيم القادمة من الباك
+    const underReview = {{ counts['under_review']|default(0)|int }};
+    const approved    = {{ counts['approved']|default(0)|int }};
+    const rejected    = {{ counts['rejected']|default(0)|int }};
+    const total = underReview + approved + rejected;
+
+    const ctx = document.getElementById('statusChart').getContext('2d');
+
+    // بيانات الرسم
+    const chartData = total === 0
+      ? {
+          labels: ['لا توجد بيانات'],
+          datasets: [{
+            data: [1],
+            backgroundColor: ['#e5e7eb']
+          }]
+        }
+      : {
+          labels: ['قيد المراجعة', 'مقبولة', 'مرفوضة'],
+          datasets: [{
+            data: [underReview, approved, rejected],
+            backgroundColor: ['#FFA500', '#28a745', '#dc3545'], // برتقالي، أخضر، أحمر
+            borderWidth: 1
+          }]
+        };
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',  // عرض الألوان والأسماء تحت الدونات
+            labels: {
+              usePointStyle: true,
+              padding: 16,
+              font: { size: 14 },
+              rtl: true,           // ترتيب لليمين
+              textAlign: 'right'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                // عرض القيمة بجانب الاسم
+                return ctx.label + ': ' + (total === 0 ? 0 : ctx.parsed);
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+
+{% include 'partials_footer_customer.html' %}
+</div>
+{% endblock %}

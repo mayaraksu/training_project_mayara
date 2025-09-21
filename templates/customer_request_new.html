@@ -1,0 +1,113 @@
+{% extends "customer_base.html" %}
+{% set body_class = "customer-request-new" %}
+{% block title %}إضافة طلب{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="auth-card glass" style="max-width:760px;margin:40px auto;padding:22px;">
+    <h2 class="card-title" style="margin:0 0 14px;">إضافة طلب</h2>
+
+    <div id="msgBox">
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+        {% if msgs %}
+          <div class="alert-container" style="margin-top:10px;">
+            {% for cat, msg in msgs %}
+              <div class="alert alert-{{ 'success' if cat=='success' else 'danger' }}">
+                {{ msg }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <form id="reqForm" method="post" action="{{ url_for('customer_request_new') }}" class="smart-form" novalidate>
+      <!-- العنوان -->
+      <label class="form-label">عنوان الطلب</label>
+      <input type="text" name="title" class="input" placeholder="مثال: تحليل مياه – حي الياسمين" required>
+
+      <!-- الحي + أخرى -->
+        <div class="row" style="margin-top:14px;">
+  <div class="col">
+    <label class="form-label" for="district">الحي</label>
+    <select id="district" name="district" class="input" required>
+      <option value="" disabled selected>اختر الحي</option>
+      <option value="حي الريان">حي الريان</option>
+      <option value="حي النخيل">حي النخيل</option>
+      <option value="حي الياسمين">حي الياسمين</option>
+      <option value="other">أخرى</option>
+    </select>
+  </div>
+
+  <div class="col" id="other-wrapper" style="display:none;">
+    <label class="form-label" for="district_other">
+      أدخل اسم الحي (عند اختيار "أخرى")
+    </label>
+    <input
+      type="text"
+      id="district_other"
+      name="district_other"
+      class="input"
+      placeholder="اكتب اسم الحي هنا"
+    />
+  </div>
+</div>
+
+
+
+
+      <!-- نوع الطلب -->
+      <label class="form-label" style="margin-top:14px;">نوع الطلب</label>
+      <select name="request_type" class="input" required>
+        <option value="" selected disabled>اختر نوع الطلب</option>
+        <option>تحليل مياه</option>
+        <option>فحص بئر</option>
+        <option>تقرير لجنة المياه</option>
+        <option>اعتراض على نتيجة التحليل</option>
+        <option>طلب إعادة فحص عينة</option>
+        <option>بلاغ تلوث مياه</option>
+        <option>طلب صهريج مياه صالحة للشرب</option>
+        <option>طلب رخصة حفر بئر</option>
+      </select>
+
+      <!-- ملاحظات -->
+      <label class="form-label" style="margin-top:14px;">ملاحظات (اختياري)</label>
+      <textarea name="notes" class="input" rows="4" placeholder="تفاصيل إضافية (اختياري)"></textarea>
+
+      <!-- الأزرار -->
+      <div class="row" style="margin-top:18px; gap:10px;">
+        <div class="form-actions btn-row">
+  <button type="submit" class="btn-green">حفظ</button>
+  <button type="button" class="btn-green" onclick="window.location='{{ url_for('customer_home') }}'">إلغاء</button>
+</div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const sel = document.getElementById("district");
+  const wrapper = document.getElementById("other-wrapper");
+  const other = document.getElementById("district_other");
+
+  function toggleOther() {
+    if (sel.value === "other") {
+      wrapper.style.display = "block";
+      other.required = true;
+      other.focus();
+    } else {
+      wrapper.style.display = "none";
+      other.required = false;
+      other.value = "";
+    }
+  }
+
+  sel.addEventListener("change", toggleOther);
+  toggleOther(); // ضبط الحالة عند تحميل الصفحة
+});
+
+</script>
+
+{% include 'partials_footer_customer.html' %}
+{% endblock %}

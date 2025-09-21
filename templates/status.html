@@ -1,83 +1,121 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 style="text-align:center;margin:0 0 18px">حالة الطلب</h2>
+<h2 style="text-align:center;margin:0 0 18px">استعلام عن حالة الطلب</h2>
 
-<div class="card" style="max-width:880px;margin:0 auto">
-  <form method="get" action="{{ url_for('status_page') }}" class="form-grid" style="display:grid;gap:12px">
+{% set show_other = (dist == 'أخرى') %}
 
-    <!-- الحالة -->
+<div class="card" style="max-width:980px;margin:0 auto;padding:18px">
+  <form method="get"
+        action="{{ url_for('status_page') }}"
+        id="filterForm"
+        dir="rtl"
+        class="grid"
+        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+
     <div>
-      <label>الحالة</label>
-      <select name="status">
-        {% for val, label in statuses %}
-          <option value="{{ val }}"
-            {% if val == selected_status %}selected{% endif %}>
-            {{ label }}
-          </option>
-        {% endfor %}
-      </select>
+      <label>رقم الطلب</label>
+      <input type="text" name="number" value="{{ number or '' }}" placeholder="مثال: 1001">
     </div>
 
-    <!-- نوع الطلب -->
     <div>
       <label>نوع الطلب</label>
-      <select name="type">
-        <option value="" {% if selected_type =='' %}selected{% endif %}>الكل</option>
+      <select name="type" id="type">
+        <option value="" {% if not typ %}selected{% endif %}>الكل</option>
         {% for rt in req_types %}
-          <option value="{{ rt }}"
-            {% if rt == selected_type %}selected{% endif %}>
-            {{ rt }}
-          </option>
+          <option value="{{ rt }}" {% if typ==rt %}selected{% endif %}>{{ rt }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <!-- كلمة مفتاحية -->
+    <div>
+      <label>من تاريخ</label>
+      <input type="date" name="from" value="{{ dfrom or '' }}">
+    </div>
+
+    <div>
+      <label>إلى تاريخ</label>
+      <input type="date" name="to" value="{{ dto or '' }}">
+    </div>
+
     <div style="grid-column:1/-1">
-      <label>كلمة مفتاحية</label>
-      <input type="text" name="q" value="{{ q or '' }}" placeholder="مثال: اسم الحي أو جزء من العنوان">
+      <label>الحي</label>
+      <select name="district" id="district">
+        <option value="" {% if not dist %}selected{% endif %}>الكل</option>
+        {% for d in districts %}
+          <option value="{{ d }}" {% if dist==d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+        <option value="أخرى" {% if dist=='أخرى' %}selected{% endif %}>أخرى</option>
+      </select>
+
+      <input type="text"
+             name="district_other"
+             id="district_other"
+             placeholder="اكتب اسم الحي"
+             value="{{ other or '' }}"
+             style="margin-top:6px;display:{% if show_other %}block{% else %}none{% endif %}">
     </div>
 
-    <div style="display:flex;gap:10px;grid-column:1/-1">
+    <div style="grid-column:1/-1;display:flex;gap:10px">
       <button type="submit" class="btn-green">بحث</button>
-      <a href="{{ url_for('status_page') }}" class="btn-red" style="text-align:center;display:inline-block">مسح</a>
+      <a class="btn-red" href="{{ url_for('status_page') }}" style="text-align:center;display:inline-block">مسح</a>
     </div>
-
   </form>
 </div>
 
-<!-- النتائج -->
-<div style="max-width:880px;margin:14px auto 0">
-  {% if rows %}
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
-      {% for r in rows %}
-        <div class="card" style="padding:14px">
-          <div style="font-weight:700;margin-bottom:6px">{{ r.title }}</div>
-          <div class="meta">النوع: {{ r.req_type }}</div>
-          <div class="meta">
-            الحالة:
-            <span class="{{ r.status_class }}">{{ r.status_label }}</span>
+<div style="max-width:980px;margin:16px auto 0" dir="rtl">
+
+  {% if searched %}
+    {% if items and items|length %}
+      <div class="results-grid">
+        {% for row in items %}
+          <div class="card result-card">
+            <h4 style="margin:0 0 6px">{{ row.title }}</h4>
+            <div class="meta">الحي: {{ row.district }}</div>
+            <div class="meta">التاريخ: {{ row.date }}</div>
+            <div class="meta">الوقت: {{ row.time }}</div>
+            <span class="{{ row.badge_class }}" style="margin-top:8px;display:inline-block">{{ row.badge_label }}</span>
           </div>
-          <div class="meta">
-            التاريخ:
-            {% if r.created_at %}{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}
-          </div>
-        </div>
-      {% endfor %}
-    </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card" style="text-align:center;color:var(--muted)">لا توجد نتائج مطابقة.</div>
+    {% endif %}
   {% else %}
-    <div class="card" style="text-align:center;color:var(--muted)">لا توجد نتائج مطابقة.</div>
+    <div class="card" style="text-align:center;color:var(--muted)">استخدم الحقول أعلاه ثم اضغط "بحث".</div>
   {% endif %}
+
 </div>
 
 <style>
-  .meta{color:var(--muted);font-size:12px;margin-top:4px}
-  .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
-  .badge.pending{background:#ffe7a6;color:#8a6d00}
-  .badge.under_review{background:#d6ecff;color:#0a4892}
-  .badge.approved{background:#e6f9e0;color:#0f7b34}
-  .badge.rejected{background:#ffd6d6;color:#8a2532}
+  .results-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px }
+  .result-card { padding:14px }
+  .meta { color:var(--muted); font-size:12px; margin-top:4px }
+
+  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700 }
+  .badge.pending      { background:#ffe7a6; color:#8a6d00 }
+  .badge.under_review { background:#d6ecff; color:#0a4892 }
+  .badge.approved     { background:#e6f9e0; color:#0f7b34 }
+  .badge.rejected     { background:#ffd6d6; color:#8a2532 }
 </style>
+
+<script>
+  // إظهار/إخفاء حقل "أخرى" للحي
+  (function () {
+    var distSel = document.getElementById('district');
+    var otherIn = document.getElementById('district_other');
+    function toggleOther(){
+      if (!distSel || !otherIn) return;
+      var show = (distSel.value === 'أخرى');
+      otherIn.style.display = show ? 'block' : 'none';
+      if (!show) { otherIn.value = ''; } // نفرّغ الحقل إذا ما اختار "أخرى"
+    }
+    if (distSel){
+      distSel.addEventListener('change', toggleOther);
+// ضبط الحالة عند التحميل (لو الصفحة انفتحت بفلاتر سابقة)
+      toggleOther();
+    }
+  }());
+</script>
 
 {% endblock %}

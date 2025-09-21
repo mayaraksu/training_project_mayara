@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .doc-shell{
+    min-height: 100dvh;
+    padding: 28px 18px;
+    background: radial-gradient(1200px 600px at 50% -10%, #eaf6ef 0%, #f7fbf9 30%, #ffffff 70%);
+    display: grid;
+    place-items: start center;
+  }
+  .doc{
+    width: min(900px, 94vw);
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(255,255,255,.42);
+    border-radius: 18px;
+    padding: 22px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 24px 48px rgba(16,24,40,.08);
+  }
+  .doc header{ margin-bottom: 8px; }
+  .doc h1{ font-size: 22px; margin: 0 0 6px; }
+  .doc .meta{ color:#64748b; font-size: 13px; margin:0 0 10px; }
+  .doc h2{ font-size: 18px; margin: 18px 0 8px; }
+  .doc p, .doc li{ color:#334155; line-height:1.9; }
+  .doc ul{ padding-right: 20px; }
+  .doc-footer{
+    display:flex; gap:10px; justify-content:flex-start; margin-top: 14px;
+  }
+  .link-chip{
+    display:inline-block; padding:8px 12px; border-radius:999px;
+    border:1px solid rgba(15,118,110,.18);
+    background:rgba(236,253,245,.6);
+    text-decoration:none; font-size:13px; color:#0f766e;
+  }
+  .link-chip:hover{ background:rgba(236,253,245,.95) }
+</style>
+
+<div class="doc-shell">
+  <article class="doc">
+    <header>
+      <h1>{{ page_title or "مستند" }}</h1>
+      <p class="meta">آخر تحديث: {{ now.strftime('%Y-%m-%d') if now else "" }}</p>
+    </header>
+
+    <div class="doc-body">
+      {% block doc_content %}{% endblock %}
+    </div>
+
+    <div class="doc-footer">
+      <a class="link-chip" href="{{ url_for('auth_choose') }}">⬅︎ العودة لاختيار نوع الدخول</a>
+    </div>
+  </article>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="text-align:center;margin:8px 0 14px">الأرشيف</h2>
+
+<div class="card" style="max-width:980px;margin:0 auto;padding:12px">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>رقم الطلب</th>
+        <th>الاسم</th>
+        <th>نوع الحالة</th>
+        <th>التاريخ</th>
+        <th>الحالة</th>
+        <th>سبب الرفض</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in items %}
+      {% set color = '#10b981' if r.status=='approved' else('#ef4444' if r.status=='rejected' else '#f59e0b') %}
+      <tr>
+        <td>#{{ r.code }}</td>
+        <td>{{ r.customer_name }}</td>
+        <td>{{ r.case_type }}</td>
+        <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') if r.created_at }}</td>
+        <td>
+          <span class="status-dot" style="background:{{ color }}"></span>
+          {{ 'مقبول' if r.status=='approved' else ('مرفوض' if r.status=='rejected' else 'قيد المراجعة') }}
+        </td>
+        <td>{{ r.rejected_reason or '-' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted)">لا يوجد بيانات.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+.status-dot{ width:10px;height:10px;border-radius:50%;display:inline-block;margin-inline-end:6px }
+</style>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "customer_base.html" %}
+{% set body_class = "customer-archive" %}
+{% block title %}الأرشيف{% endblock %}
+
+{% block content %}
+
+<style>
+  .archive-wrap{max-width:1100px;margin:28px auto 12px;}
+  .archive-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .badge-total{background:#e8f3ec;color:#145c2a;padding:6px 12px;border-radius:999px;font-weight:600}
+
+  .table-wrap{background:#fff;border:1px solid #e6e6e6;border-radius:10px;
+              box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden}
+  .tbl-archive{width:100%;border-collapse:collapse;table-layout:fixed}
+  .tbl-archive th,.tbl-archive td{
+    padding:10px 12px;border-bottom:1px solid #eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  }
+  .tbl-archive thead th{position:sticky;top:0;background:#1c7430;color:#fff;font-weight:700;z-index:1}
+  .tbl-archive tr:hover td{background:#f7faf8}
+
+  .status-chip{padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;display:inline-block}
+  .status-pending{background:#fff5e6;color:#b86e00}
+  .status-approved{background:#e8f5ee;color:#18753e}
+  .status-rejected{background:#fdeceb;color:#c62828}
+
+  .code{font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
+  .col-code{width:120px}
+  .col-date,.col-time{width:110px;text-align:center}
+</style>
+
+<div class="archive-wrap">
+  <div class="archive-head">
+    <h3 style="margin:0">الأرشيف</h3>
+    <span class="badge-total">مجموع الحالات : {{ rows|length }}</span>
+  </div>
+
+  <div class="table-wrap">
+    {% if rows and rows|length %}
+    <table class="tbl-archive">
+      <thead>
+        <tr>
+          <th class="col-code">رقم الطلب</th>
+          <th>العنوان</th>
+          <th>الحي</th>
+          <th>النوع</th>
+          <th>الحالة</th>
+          <th class="col-date">التاريخ</th>
+          <th class="col-time">الوقت</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set st = (r.status or '').lower() %}
+        <tr>
+          <td class="code">{{ r.tracking_code }}</td>
+          <td title="{{ r.title }}">{{ r.title }}</td>
+          <td>{{ r.district }}</td>
+          <td>{{ r.request_type }}</td>
+          <td>
+            <span class="status-chip
+              {% if st in ['pending','under_review'] %}status-pending
+              {% elif st in ['approved','accepted'] %}status-approved
+              {% else %}status-rejected{% endif %}">
+              {{ 'تحت المراجعة' if st in ['pending','under_review']
+                 else ('مقبولة' if st in ['approved','accepted'] else 'مرفوضة') }}
+            </span>
+          </td>
+          <td>{{ r.created_at.date() }}</td>
+          <td>{{ r.created_at.strftime('%H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div style="padding:32px;text-align:center">لا توجد طلبات في الأرشيف.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% include 'partials_footer_customer.html' %}
+{% endblock %}
