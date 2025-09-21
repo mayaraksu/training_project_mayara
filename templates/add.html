@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-<<<<<<< HEAD
   <h2 style="text-align:center;margin:0 0 18px">إضافة طلب</h2>
 
   <div class="card">
@@ -24,7 +23,6 @@
           <option value="">— اختر —</option>
           {% for rt in req_types %}
             <option value="{{ rt }}" {% if form.req_type==rt %}selected{% endif %}>{{ rt }}</option>
-=======
 
 <h2 style="text-align:center;margin:0 0 18px">إضافة طلب جديد</h2>
 
@@ -43,12 +41,9 @@
           <option value="">اختر النوع</option>
           {% for t in req_types %}
             <option value="{{ t }}">{{ t }}</option>
->>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
           {% endfor %}
         </select>
       </div>
-
-<<<<<<< HEAD
       <div>
         <label>الحي</label>
         <input type="text" name="district" placeholder="مثل: حي الياسمين"
@@ -73,14 +68,13 @@
         <button type="submit" class="btn-green">حفظ</button>
         <a class="btn-red" href="{{ url_for('dashboard') }}">إلغاء</a>
       </div>
-    </form>
+  </form>
   </div>
 
   <p style="color:var(--muted);margin-top:10px">
     * بعد الحفظ ستتحدّث لوحة “الرئيسية” تلقائيًا، وستظهر القيم في الرسوم البيانية.
   </p>
 {% endblock %}
-=======
       <!-- الحي + خيار "أخرى" -->
       <div>
         <label>الحي <span class="req-star">*</span></label>
@@ -180,4 +174,3 @@
 
 {% endblock %}
 
->>>>>>> 4ecbedc0c0d94090bfd8a85754327e566da579eb
