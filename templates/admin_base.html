@@ -35,7 +35,10 @@
     .notif-item{padding:8px 6px; border-bottom:1px dashed #eee}
     .notif-item:last-child{border-bottom:0}
     .notif-empty{padding:16px; text-align:center; color:var(--muted)}
-
+body {
+    margin: 0;
+    padding: 0;
+  }
     main{padding:18px}
     /* أماكن لإضافة CSS خاص بكل صفحة */
     {% block extra_css %}{% endblock %}
@@ -84,8 +87,8 @@
         </div>
       </div>
 
-      <!-- دارك مود (نفس الموجود) -->
-      <button id="btnDark" class="nav-icon-btn" title="الوضع الداكن"><i class="fa-regular fa-moon"></i></button>
+
+      <button id="btnDark" class="nav-icon-btn" title="الوضع الداكن">🌓</button>
 
       <!-- خروج المسؤول -->
       <form method="post" action="{{ url_for('admin_logout') }}" style="display:inline">
@@ -93,6 +96,7 @@
       </form>
     </div>
   </nav>
+
 
   <main>
     {% block content %}{% endblock %}
