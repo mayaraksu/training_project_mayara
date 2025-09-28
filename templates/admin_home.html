@@ -1,15 +1,129 @@
-{% extends "base.html" %}
-{% set body_class = "admin-page" %}
+{% extends "admin_base.html" %}
+{% set is_admin = True %}
+{% block title %}الرئيسية{% endblock %}
 
 {% block content %}
-<main style="max-width:980px;margin:28px auto;padding:0 12px">
-  <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h2>مرحباً {{ session.get('admin_name') or 'مسؤول' }}</h2>
-    <a class="btn" href="{{ url_for('admin_logout') }}">تسجيل الخروج</a>
-  </header>
 
-  <section class="auth-card glass" style="padding:18px">
-    <p>هنا راح تكون لوحة تحكم المسؤول. لاحقًا نضيف الإحصائيات والطلبات..</p>
-  </section>
-</main>
+
+<style>
+  .kpis{
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    gap:12px; max-width: 1100px; margin: 0 auto 14px;
+  }
+  .kpi{
+    background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+    padding:14px 16px;
+  }
+  .kpi .kpi-head{font-size:13px;color:#6b7280;margin-bottom:6px}
+  .kpi .kpi-val{font-size:24px;font-weight:800}
+  .kpi.total   .kpi-val{color:#111827}
+  .kpi.review  .kpi-val{color:#d97706}   /* برتقالي قيد المراجعة */
+  .kpi.ok      .kpi-val{color:#166534}   /* أخضر قبول */
+  .kpi.bad     .kpi-val{color:#b91c1c}   /* أحمر رفض */
+
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+  .card-head{padding:14px 16px;border-bottom:1px solid #eef0f2;font-weight:700}
+  .card-body{padding:16px}
+
+  /* دارك مود خفيف */
+  html.dark .kpi, html.dark .card{
+    background:#111; border-color:#222;
+  }
+  html.dark .kpi .kpi-head{color:#9aa0a6}
+  html.dark .kpi .kpi-val{color:#e5e7eb}
+  html.dark .card-head{border-bottom-color:#1f2937}
+</style>
+
+<!-- KPIs -->
+<div class="kpis">
+  <div class="kpi total">
+    <div class="kpi-head">إجمالي الطلبات</div>
+    <div class="kpi-val">{{ cards.total }}</div>
+  </div>
+  <div class="kpi review">
+    <div class="kpi-head">قيد المراجعة</div>
+    <div class="kpi-val">{{ cards.under_review }}</div>
+  </div>
+  <div class="kpi ok">
+    <div class="kpi-head">مقبولة</div>
+    <div class="kpi-val">{{ cards.approved }}</div>
+  </div>
+  <div class="kpi bad">
+    <div class="kpi-head">مرفوضة</div>
+    <div class="kpi-val">{{ cards.rejected }}</div>
+  </div>
+</div>
+
+<!-- الرسم البياني -->
+<div class="card" style="max-width:1100px;margin:0 auto">
+  <div class="card-head">الطلبات عبر الأشهر</div>
+  <div class="card-body" style="min-height:280px">
+    <canvas id="monthArea" height="260"></canvas>
+  </div>
+</div>
+
+<!-- Chart.js (لو غير مضمن مسبقًا في base) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function(){
+  const ctx = document.getElementById('monthArea').getContext('2d');
+
+  const labels   = {{ monthly_labels|tojson }};
+  const approved = {{ monthly_approved|tojson }};
+  const review   = {{ monthly_under_review|tojson }};
+  const rejected = {{ monthly_rejected|tojson }};
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'مقبولة',
+          data: approved,
+          borderColor: '#166534',
+          backgroundColor: 'rgba(22,101,52,.18)',
+          fill: true,
+          tension: .35,
+          borderWidth: 2,
+          pointRadius: 2
+        },
+        {
+          label: 'قيد المراجعة',
+          data: review,
+          borderColor: '#d97706',
+          backgroundColor: 'rgba(217,119,6,.18)',
+          fill: true,
+          tension: .35,
+          borderWidth: 2,
+          pointRadius: 2
+        },
+        {
+          label: 'مرفوضة',
+          data: rejected,
+          borderColor: '#b91c1c',
+          backgroundColor: 'rgba(185,28,28,.18)',
+          fill: true,
+          tension: .35,
+          borderWidth: 2,
+          pointRadius: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+        tooltip: { rtl: true, titleAlign: 'right', bodyAlign: 'right' }
+      },
+      scales: {
+        x: { grid: { display:false } },
+        y: { beginAtZero:true, grid: { color:'rgba(0,0,0,.06)' } }
+      }
+    }
+  });
+})();
+</script>
+
 {% endblock %}

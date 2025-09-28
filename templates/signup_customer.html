@@ -1,52 +1,144 @@
 {% extends "base.html" %}
-{% set body_class = "auth-choose-page" %}
+{% set is_auth = True %}
+{% set body_class = "auth-signup-page" %}
+{% if is_auth %}{% include "partials_footer_auth.html" %}{% endif %}
 {% block content %}
 
+<style>
+  :root{
+    --brand:#166534;
+    --glass-bg: rgba(255,255,255,.85);
+    --ring: rgba(22,101,52,.18);
+  }
+
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(rgba(255,255,255,.75), rgba(255,255,255,.75)),
+      url("{{ url_for('static', filename='backg.png') }}") center/cover no-repeat;
+    background-attachment: fixed;
+  }
+
+  .auth-shell { width:100%; display:grid; place-items:center; }
+
+  .auth-card{
+    position:relative;
+    width:min(520px,92vw);
+    padding:26px 22px 20px;
+    border-radius:16px;
+    background:var(--glass-bg);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 12px 28px rgba(0,0,0,.12);
+  }
+
+  .logo-badge{
+    position:absolute;
+    left:50%; top:0;
+    transform:translate(-50%,-50%);
+    width:72px; height:72px;
+    border-radius:50%;
+    background:#fff;
+    display:grid; place-items:center;
+    box-shadow:0 6px 20px rgba(0,0,0,.12);
+  }
+  .logo-badge img{
+    width:60px; height:60px; border-radius:50%;
+  }
+
+  h2.title{ text-align:center; margin:30px 0 14px; }
+
+  form{
+    width:min(360px,88vw);
+    margin:0 auto;
+    display:grid;
+    gap:10px;
+  }
+  .field{ display:grid; gap:6px; }
+  label{ font-size:13px; color:#6b7280; font-weight:600 }
+
+  input[type="text"], input[type="email"], input[type="password"]{
+    width:100%;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:15px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input:focus{
+    border-color:#c7e6d5;
+    box-shadow:0 0 0 4px var(--ring);
+  }
+
+  .form-buttons{
+    display:flex;
+    gap:10px;
+    justify-content:space-between;
+    margin-top:8px;
+  }
+  .btn-submit{
+    background:var(--brand);
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:700;
+    box-shadow:0 8px 20px rgba(22,101,52,.18);
+  }
+  .btn-submit:hover{ filter:brightness(.95); }
+  .btn-back{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    color:#444;
+    text-decoration:none;
+    padding:10px 16px;
+    border-radius:10px;
+    font-weight:700;
+  }
+</style>
+
 <section class="auth-card glass" style="max-width:560px;margin:64px auto;padding:28px">
-  <!-- اللوقو -->
   <div class="logo" style="text-align:center;margin-bottom:12px">
-    <img src="{{ url_for('static',filename='logonum1.png') }}" alt="logo"
-         class="logo_ring" style="width:74px;height:74px;border-radius:50%">
+    <img src="{{ url_for('static',filename='logonum1.png') }}" alt="logo" style="width:74px;height:74px;border-radius:50%">
   </div>
 
-  <!-- العنوان -->
-  <h2 class="title" style="text-align:center;margin:0 0 18px">إنشاء حساب جديد</h2>
+  <h2 class="title">إنشاء حساب عميل</h2>
 
-  <!-- الرسائل (فلاش) -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-stack" style="margin-bottom:10px">
-        {% for cat, msg in messages %}
-          <div class="flash {{ cat }}">{{ msg }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+  <form method="post" novalidate autocomplete="off">
+    <div class="field">
+      <label>الاسم الكامل</label>
+      <input type="text" name="full_name" placeholder="اكتب اسمك الكامل">
+    </div>
 
-  <!-- النموذج -->
-   <!-- signup_customer.html -->
-<form method="post" action="{{ url_for('customer_signup') }}" novalidate style="display:grid;gap:12px" autocomplete="off">
-    <label>الاسم الكامل
-      <input type="text"     name="full_name"         required class="input" placeholder="اكتب اسمك الكامل">
-    </label>
+    <div class="field">
+      <label>البريد الإلكتروني</label>
+      <input type="email" name="email" placeholder="name@example.com">
+    </div>
 
-    <label>البريد الإلكتروني
-     <input type="email"    name="email"             required class="input" placeholder="name@example.com">
-    </label>
+    <div class="field">
+      <label>كلمة المرور</label>
+      <input type="password" name="password" placeholder="••••••••">
+    </div>
 
-    <label>كلمة المرور
-      <input type="password" name="password"          required class="input" placeholder="••••••••">
-    </label>
+    <div class="field">
+      <label>تأكيد كلمة المرور</label>
+      <input type="password" name="confirm_password" placeholder="أعد كتابة كلمة المرور">
+    </div>
 
-    <label>تأكيد كلمة المرور
-      <input type="password" name="confirm_password"  required class="input" placeholder="تأكيد كلمة المرور">
-    </label>
-
-    <!-- الأزرار -->
-    <div class="form-buttons" style="display:flex;gap:12px;justify-content:flex-end">
+    <div class="form-buttons">
       <a href="{{ url_for('customer_login') }}" class="btn-back">رجوع</a>
-      <button type="submit" class="btn-submit">تسجيل</button>
+      <button type="submit" class="btn-submit">إنشاء حساب</button>
     </div>
   </form>
+
+  <div class="hint">هل لديك حساب بالفعل؟ <a href="{{ url_for('customer_login') }}">سجّل دخول</a></div>
 </section>
+
 {% endblock %}

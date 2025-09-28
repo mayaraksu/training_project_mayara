@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Blueprint,current_app
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import or_, text, func, and_
 from sqlalchemy.inspection import inspect
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, Admin, Customer, RequestModel
-from functools import wraps
+from datetime import datetime, timedelta, time
+from dateutil.relativedelta import relativedelta
 import re, os
-from datetime import datetime ,timedelta , time
-from sqlalchemy.inspection import inspect
-from sqlalchemy import or_ , text , func , and_
+from functools import wraps
 
 # ================= إعداد التطبيق =================
 app = Flask(__name__)
@@ -19,26 +18,15 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = "CHANGE_ME_SECRET_KEY"
 db.init_app(app)
 
-
 # ================= Regex =================
 PHONE_RE = re.compile(r"^\d{10}$")
 PWD_RE   = re.compile(r"^(?=.*[A-Z])[A-Za-z0-9]{6,}$")
-
-# ================= Blueprint =================
-customers_bp = Blueprint("customers", __name__)
 # ===================== أدوات مساعدة =====================
 # ====== one-time patch for missing columns in sqlite ======
+
 def _add_column_if_missing(table: str, column: str, ddl: str) -> None:
-    """
-    يضيف عمودًا إلى جدول SQLite إن كان غير موجود.
-    - table: اسم الجدول.
-    - column: اسم العمود المراد التأكد منه.
-    - ddl: جملة ALTER TABLE المناسبة لإضافة العمود.
-    """
-    # نستخدم اتصالًا على مستوى المحرك لضمان تنفيذ الـ DDL
     with db.engine.begin() as conn:
-        # PRAGMA table_info يعيد: (cid, name, type, notnull, dflt_value, pk)
-        cols = [row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")]
+        cols = [row[1] for row in conn.exec_driver_sql(f'PRAGMA table_info("{table}")')]
         if column not in cols:
             conn.exec_driver_sql(ddl)
 
@@ -46,30 +34,46 @@ with app.app_context():
     # إنشاء الجداول إن لم تكن موجودة
     db.create_all()
 
-    # ترقيع جدول customers
+    # ===== أعمدة جدول requests (تضاف فقط إذا كانت غير موجودة) =====
     _add_column_if_missing(
-        "customers", "created_at",
-        "ALTER TABLE customers ADD COLUMN created_at DATETIME"
+        table="requests",
+        column="created_at",
+        ddl="ALTER TABLE requests ADD COLUMN created_at DATETIME DEFAULT (CURRENT_TIMESTAMP)"
     )
 
-    # ترقيع جدول requests
     _add_column_if_missing(
-        "requests", "title",
-        "ALTER TABLE requests ADD COLUMN title VARCHAR(200)"
-    )
-    _add_column_if_missing(
-        "requests", "status",
-        "ALTER TABLE requests ADD COLUMN status VARCHAR(20) DEFAULT 'pending'"
-    )
-    _add_column_if_missing(
-        "requests", "tracking_code",
-        "ALTER TABLE requests ADD COLUMN tracking_code VARCHAR(50)"
-    )
-    _add_column_if_missing(
-        "requests", "created_at",
-        "ALTER TABLE requests ADD COLUMN created_at DATETIME"
+        table="requests",
+        column="notes",
+        ddl="ALTER TABLE requests ADD COLUMN notes TEXT"
     )
 
+    _add_column_if_missing(
+        table="requests",
+        column="rejected_reason",
+        ddl="ALTER TABLE requests ADD COLUMN rejected_reason TEXT"
+    )
+
+    _add_column_if_missing(
+        table="requests",
+        column="status",
+        ddl="ALTER TABLE requests ADD COLUMN status TEXT NOT NULL DEFAULT 'under_review'"
+    )
+
+    _add_column_if_missing(
+        table="requests",
+        column="tracking_code",
+        ddl="ALTER TABLE requests ADD COLUMN tracking_code TEXT"
+    )
+
+    # ===== توحيد/تصحيح القيم القديمة للحالة (اختياري لكنه مفيد) =====
+    with db.engine.begin() as conn:
+        conn.exec_driver_sql("""
+            UPDATE requests
+               SET status = 'under_review'
+             WHERE status IS NULL
+                OR TRIM(status) = ''
+                OR status IN ('pending','in_review','new')
+        """)
 # ====== مساعدات عامة ======
 def notifications_data(cid=None):
     """
@@ -123,8 +127,7 @@ def counts_for_customer(cid: int):
         total,
         base.filter(col.in_(PENDING)).count(),
         base.filter(col.in_(APPROVED)).count(),
-        base.filter(col.in_(REJECTED)).count()
-)
+        base.filter(col.in_(REJECTED)).count())
 
 def customer_login_required(view):
     @wraps(view)
@@ -147,16 +150,23 @@ def ensure_db():
         else:
             print("ℹ️ Admin already exists.")
 
+
+with app.app_context():
+    try:
+        db.session.execute(db.text('ALTER TABLE requests ADD COLUMN rejected_reason TEXT'))
+        db.session.commit()
+    except Exception:
+        pass  # العمود موجود مسبقًا
 # ديكوريتر تأكيد دخول الأدمن
-def admin_login_required(view):
+def admin_required(view):
     @wraps(view)
-    def _wrap(*args, **kwargs):
-        if session.get("role") != "admin" or "admin_id" not in session:
+    def wrapped(*args, **kwargs):
+        if session.get("role") != "admin":
+            flash("الرجاء تسجيل الدخول كمسؤول.", category="err")
             return redirect(url_for("admin_login"))
         return view(*args, **kwargs)
-    return _wrap
+    return wrapped
 
-#========================
 
 # ===== Context واحد يحقن المتغيرات للقوالب =====
 
@@ -202,56 +212,81 @@ def _next_tracking_code():
     last_id = db.session.query(func.max(RequestModel.id)).scalar() or 0
     return f"WT-{last_id + 1:04d}"
 
+#===========================================================
+@app.before_request
+def guard_areas():
+    ep = request.endpoint or ""
+
+    # حماية مسارات العملاء فقط
+    if ep.startswith("customer_"):
+        if ep not in ("customer_login", "customer_signup", "customer_logout", "static"):
+            if "customer_id" not in session:
+                return redirect(url_for("customer_login"))
+
+    # حماية مسارات المسؤولين فقط
+    if ep.startswith("admin_"):
+        if ep not in ("admin_login", "admin_logout", "static"):
+            if "admin_id" not in session:
+                return redirect(url_for("admin_login"))
+
+
+
+
+
 # ===================== الراوتات العامة =====================
 @app.route("/")
+def index():
+    return redirect(url_for("splash"))
+
+# 2) السبلاش
+@app.route("/splash")
 def splash():
-    return render_template("splash.html", title="بدء", hide_nav=True,hide_logo=True)
+    return render_template(
+        "splash.html",
+        title="جارٍ التحميل…",
+        hide_nav=True,
+        hide_logo=True,
+    )
 
-@app.route("/auth")
+# 3) شاشة اختيار نوع الدخول (صلّحي المسار هنا)
+@app.route("/auth/choose")
 def auth_choose():
-    return render_template("auth_choose.html", title="اختيار نوع الدخول", hide_nav=True, hide_logo=True)
-
-
+    return render_template(
+        "auth_choose.html",
+        title="اختيار نوع الدخول",
+        hide_nav=True,
+        hide_logo=True,
+    )
 # ===================== مسؤولين =====================
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
-    title = "دخول المسؤولين"
-
+    title = "تسجيل دخول المسؤول"
     if request.method == "POST":
-        # 1) جمع المدخلات بأمان
         email = (request.form.get("email") or "").strip().lower()
         password = (request.form.get("password") or "").strip()
 
-        # 2) تحقق من الفراغ
         if not email or not password:
-            flash("الرجاء إدخال البريد وكلمة المرور.", "err")
-            return render_template("admin_login.html",
-                                   title=title, hide_nav=True,
-                                   email=email)
+            flash("الرجاء إدخال البريد وكلمة المرور", category="err")
+            return render_template("admin_login.html", title=title, hide_nav=True, email=email)
 
-        # 3) جلب المستخدم والتحقق من كلمة المرور
         admin = Admin.query.filter_by(email=email).first()
         if not admin or not check_password_hash(admin.password_hash, password):
-            flash("بيانات الدخول غير صحيحة.", "err")
-            return render_template("admin_login.html",
-                                   title=title, hide_nav=True,
-                                   email=email)
+            flash("بيانات الدخول غير صحيحة", category="err")
+            return render_template("admin_login.html", title=title, hide_nav=True, email=email)
 
-        # 4) نجاح — إعداد الجلسة
+        # تهيئة الجلسة
         session.clear()
         session["role"] = "admin"
         session["admin_id"] = admin.id
         session["admin_name"] = getattr(admin, "name", "مسؤول")
-        return render_template("admin_login.html",
-                               title=title, hide_nav=True,
-                               success_redirect=url_for("admin_home"))
 
-    # GET
+        return redirect(url_for("admin_home"))
+
     return render_template("admin_login.html", title=title, hide_nav=True)
 #===============================================
 @app.route("/admin")
 @app.route("/admin/dashboard")
-@admin_login_required
+@admin_required
 def admin_dashboard():
     cnt = counters_q()
     labels, data = monthly_series()
@@ -263,7 +298,7 @@ def admin_dashboard():
         chart_data=data)
 
 @app.route("/admin/manage")
-@admin_login_required
+@admin_required
 def admin_manage():
     pending = (
         RequestModel.query
@@ -272,56 +307,190 @@ def admin_manage():
         .all()
     )
     return render_template(
-        "admin_manage.html",
+        "admin_requests.html",
         title="إدارة الطلبات",
         pending=pending
     )
 
-@app.route("/admin/archive")
-@admin_login_required
+@app.get("/admin/archive")
+@admin_required
 def admin_archive():
-    archived = (
-        RequestModel.query
-        .filter(RequestModel.Request_status.in_(["approved", "rejected"]))
-        .order_by(RequestModel.created_at.desc())
-        .all()
-    )
-    return render_template("admin_archive.html", title="الأرشيف", requests=archived)
-
-@app.route("/admin/home")
-@admin_login_required
+    items = (RequestModel.query
+             .filter(RequestModel.status.in_(["approved", "rejected"]))
+             .order_by(RequestModel.created_at.desc())
+             .all())
+    return render_template("admin_archive.html", items=items, is_admin=True)
+#====================
+@app.get("/admin/home")
 def admin_home():
-    return render_template("admin_home.html", title="لوحة التحكم", hide_nav=False)
+    if "admin_id" not in session:
+        return redirect(url_for("admin_login"))
 
+    # إحصاءات أعلى الصفحة
+    total        = db.session.query(func.count(RequestModel.id)).scalar() or 0
+    approved_cnt = db.session.query(func.count(RequestModel.id)).filter(RequestModel.status == "approved").scalar() or 0
+    review_cnt   = db.session.query(func.count(RequestModel.id)).filter(RequestModel.status == "under_review").scalar() or 0
+    rejected_cnt = db.session.query(func.count(RequestModel.id)).filter(RequestModel.status == "rejected").scalar() or 0
+
+    # بيانات الرسم الشهري لآخر 12 شهر
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().replace(day=1)  # أول يوم في الشهر الحالي
+    months = []
+    for i in range(11, -1, -1):  # 12 شهر للخلف
+        start = (today - relativedelta(months=i))
+        end   = (start + relativedelta(months=1))
+        label = start.strftime("%Y-%m")
+        months.append((label, start, end))
+
+    labels = []
+    series_approved = []
+    series_review   = []
+    series_rejected = []
+
+    for label, start, end in months:
+        labels.append(start.strftime("%b %Y"))  # مثال: Jan 2025
+        series_approved.append(
+            db.session.query(func.count(RequestModel.id))
+            .filter(RequestModel.created_at >= start, RequestModel.created_at < end,
+                    RequestModel.status == "approved").scalar() or 0
+        )
+        series_review.append(
+            db.session.query(func.count(RequestModel.id))
+            .filter(RequestModel.created_at >= start, RequestModel.created_at < end,
+                    RequestModel.status == "under_review").scalar() or 0
+        )
+        series_rejected.append(
+            db.session.query(func.count(RequestModel.id))
+            .filter(RequestModel.created_at >= start, RequestModel.created_at < end,
+                    RequestModel.status == "rejected").scalar() or 0
+        )
+
+    return render_template(
+        "admin_home.html",
+        is_admin=True,
+        cards=dict(
+            total=total,
+            approved=approved_cnt,
+            under_review=review_cnt,
+            rejected=rejected_cnt,
+        ),
+        monthly_labels=labels,
+        monthly_approved=series_approved,
+        monthly_under_review=series_review,
+        monthly_rejected=series_rejected,
+    )
 # ====== تسجيل خروج المسؤول ======
-@app.route("/admin/logout")
-@admin_login_required
+@app.post("/admin/logout")
 def admin_logout():
     session.clear()
-    flash("تم تسجيل الخروج.", "ok")
     return redirect(url_for("admin_login"))
 
+@app.get("/admin/requests")
+def admin_requests():
+    if "admin_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    # الطلبات قيد المراجعة أولاً
+    pending = (RequestModel.query
+               .filter(RequestModel.status == "under_review")
+               .order_by(RequestModel.created_at.desc())
+               .all())
+
+    # لو تحب تعرض المقبولة/المرفوضة هنا بشكل مختصر
+    accepted = (RequestModel.query
+                .filter(RequestModel.status == "accepted")
+                .order_by(RequestModel.created_at.desc())
+                .limit(10).all())
+
+    rejected = (RequestModel.query
+                .filter(RequestModel.status == "rejected")
+                .order_by(RequestModel.created_at.desc())
+                .limit(10).all())
+
+    return render_template(
+        "admin_requests.html",
+        is_admin=True,
+        pending=pending,
+        approved=accepted,
+        rejected=rejected,
+        notifications=notifications_data() if 'notifications_data' in globals() else {}
+    )
 # API: قبول طلب
 @app.post("/admin/requests/<int:req_id>/approve")
-@admin_login_required
+@admin_required
 def api_approve(req_id):
     r = RequestModel.query.get_or_404(req_id)
-    r.Request_status = "approved"
-    r.Rejected_reason = None
+    r.status = "accepted"
+    r.decision_reason = None
     db.session.commit()
-    return jsonify({"ok": True, "status": r.Request_status})
+    return jsonify({"ok": True, "status": r.status})
 
 @app.post("/admin/requests/<int:req_id>/reject")
-@admin_login_required
+@admin_required
 def api_reject(req_id):
-    reason = (request.json or {}).get("reason", "").strip()
+    data   = request.get_json() or {}
+    reason = (data.get("reason") or "").strip()
     if not reason:
-        return jsonify({"ok": False, "error": "سبب الرفض مطلوب"}), 400
+        return jsonify({"ok": False, "error": "اكتبي سبب الرفض."}), 400
+
     r = RequestModel.query.get_or_404(req_id)
-    r.Request_status = "rejected"
-    r.Rejected_reason = reason
+    r.status = "rejected"
+    r.decision_reason = reason
     db.session.commit()
-    return jsonify({"ok": True, "status": r.Request_status})
+    return jsonify({"ok": True, "status": r.status, "reason": r.decision_reason})
+#====================================================
+@app.route("/admin/account", methods=["GET", "POST"])
+def admin_account():
+    # حماية منطقة الأدمن
+    if "admin_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    admin = Admin.query.get(session["admin_id"])
+
+    if request.method == "POST":
+        curr = (request.form.get("curr_password") or "").strip()
+        new1 = (request.form.get("new_password") or "").strip()
+        new2 = (request.form.get("new_password_confirm") or "").strip()
+
+        if not curr or not new1 or not new2:
+            flash("الرجاء تعبئة جميع الحقول.", "err")
+        elif not check_password_hash(admin.password_hash, curr):
+            flash("كلمة المرور الحالية غير صحيحة.", "err")
+        elif new1 != new2:
+            flash("تأكيد كلمة المرور غير مطابق.", "err")
+        else:
+            admin.password_hash = generate_password_hash(new1)
+            db.session.commit()
+            flash("تم تحديث كلمة المرور بنجاح.", "success")
+
+    # مهم: تمرير admin والإشارة إلى أن الصفحة للأدمن
+    return render_template("admin_account.html", admin=admin, is_admin=True)
+
+
+@app.route("/admin/update_status", methods=["POST"])
+def admin_update_status():
+    data = request.get_json()
+    req_id = data.get("id")
+    action = data.get("action")
+    reason = data.get("reason", "")
+
+    # عدّل اسم الموديل/الحقول حسب مشروعك
+    r = RequestModel.query.get(req_id)
+    if not r:
+        return {"success": False, "message": "الطلب غير موجود"}
+
+    if action == "approve":
+        r.status = "approved"
+        r.rejected_reason = None
+    elif action == "reject":
+        r.status = "rejected"
+        r.rejected_reason = reason
+    else:
+        return {"success": False, "message": "إجراء غير صحيح"}
+
+    db.session.commit()
+    return {"success": True}
+
 
 # ===================== العملاء =====================
 @app.route("/customer/login", methods=["GET", "POST"])
@@ -377,33 +546,41 @@ def customer_signup():
 # ====== الرئيسية (لوحة العميل) ======
 @app.route("/customer/home")
 def customer_home():
-    # تأكد أن المستخدم مسجّل دخول
     if "customer_id" not in session:
         return redirect(url_for("customer_login"))
 
     cid = session["customer_id"]
 
-    # القيم الافتراضية
-    counts = {"pending": 0, "under_review": 0, "approved": 0, "rejected": 0, "total": 0}
+    # قيَم ابتدائية
+    counts = {"under_review": 0, "approved": 0, "rejected": 0}
 
-    # إجمالي الحالات حسب حالة الطلب
+    # تجميع حسب الحالة
     rows = (
         db.session.query(RequestModel.status, func.count(RequestModel.id))
         .filter(RequestModel.customer_id == cid)
         .group_by(RequestModel.status)
         .all()
     )
+    for st, c in rows:
+        if st in counts:
+            counts[st] = c
 
-    for st, n in rows:
-        key = (st or "").strip().lower()
-        if key in counts:
-            counts[key] = n
+    total = counts["under_review"] + counts["approved"] + counts["rejected"]
 
-    counts["total"] = counts["pending"] + counts["under_review"] + counts["approved"] + counts["rejected"]
+    # بيانات الدونات (ترتيب: قيد المراجعة, مقبولة, مرفوضة)
+    donut_data = [
+        counts["under_review"],
+        counts["approved"],
+        counts["rejected"],
+    ]
 
-    # لاحظ: الاستدعاء الصحيح بدون template_name_or_list:
-    return render_template("customer_home.html", counts=counts, body_class="customer-home-page")
-
+    return render_template(
+        "customer_home.html",
+        counts=counts,
+        total=total,
+        donut_data=donut_data,
+        notifications=notifications_data(session.get("customer_id")),
+    )
 # ====== إضافة طلب جديد ======
 @app.route("/customer/request/new", methods=["GET", "POST"])
 def customer_request_new():
@@ -417,7 +594,7 @@ def customer_request_new():
         if district.lower() == "other" or district == "أخرى":
             district = (request.form.get("district_other") or "").strip()
         req_type  = (request.form.get("request_type") or "").strip()
-        notes     = (request.form.get("notes") or "").strip()
+        notes = (request.form.get("notes") or "").strip()
 
         if not title or not district or not req_type:
             msg = "فضلاً أكمل الحقول المطلوبة."
@@ -432,10 +609,12 @@ def customer_request_new():
             district    = district,
             request_type= req_type,
             notes       = notes,
-            status      = "pending",
+            status      = "under_review",
             tracking_code = _next_tracking_code(),
             created_at  = datetime.utcnow(),
+
         )
+        r.status = "under_review"
         db.session.add(r)
         db.session.commit()
 
@@ -569,18 +748,39 @@ def customer_account_delete():
     flash("تم حذف حسابك ✅", "success")
     return redirect(url_for("customer_login"))
 
+#===========================
 
 
 
+@app.route("/customer/requests/<int:req_id>/delete", methods=["POST"])
+def customer_request_delete(req_id):
+    # لازم يكون مسجّل
+    if "customer_id" not in session:
+        return redirect(url_for("customer_login"))
+
+    cid = session["customer_id"]
+
+    # نجيب الطلب ويتأكد أنه لنفس العميل
+    r = RequestModel.query.filter_by(id=req_id, customer_id=cid).first_or_404()
+
+    # (اختياري) امنع الحذف لو الحالة ليست قيد المراجعة
+    # if r.status not in ("under_review", "pending"):
+    #     flash("لا يمكن حذف الطلب بعد بدء معالجته.", "danger")
+    #     return redirect(url_for("customer_requests_status"))
+
+    db.session.delete(r)
+    db.session.commit()
+
+    flash("تم حذف الطلب بنجاح.", "success")
+    return redirect(url_for("customer_requests_status"))
 
 
 
-@app.route("/customer/logout")
+@app.route("/customer/logout", methods=["POST"])
 def customer_logout():
-    session.clear()
-    flash(message="تم تسجيل الخروج", category="ok")
-    return redirect(url_for("customer_login"))
-
+    session.pop("customer_id", None)
+    flash("تم تسجيل الخروج.", "success")
+    return redirect(url_for("auth_choose"))
 #----------------البوكس السفلي ---------------
 
 
@@ -604,6 +804,12 @@ def complaints():
 def usage():
     return render_template("usage.html", title="سياسة الاستخدام")
 
+@app.route("/contact")
+def contact():
+    return render_template("contact.html", title="تواصل معنا")
+
+
+
 @app.cli.command("seed-admin")
 def seed_admin():
     email = "admin@example.com"
@@ -619,283 +825,6 @@ def seed_admin():
     else:
         print("ℹ️ Admin already exists.")
 #-=============================================
-        app.register_blueprint(customers_bp)
-# ===================== تشغيل =====================
-=======
-from __future__ import annotations
-
-import os
-from datetime import datetime
-from functools import wraps
-from collections import Counter
-
-from flask import Flask, render_template, request, redirect, url_for,session, flash
-from flask_sqlalchemy import SQLAlchemy
-# ---------------- الإعدادات العامة ----------------
-THEME = {"brand": "#1f6b57"}  # لون العلامة
-
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "change-me-strong-key"
-
-# مسار قاعدة البيانات داخل مجلد instance
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_DIR = os.path.join(BASE_DIR, "instance")
-DB_PATH = os.path.join(DB_DIR, "water_quality.db")
-os.makedirs(DB_DIR, exist_ok=True)
-
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app)
-
-# ---------------- الموديلات ----------------
-class AppUser(db.Model):
-    __tablename__ = "app_users"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class AppRequest(db.Model):
-    __tablename__ = "app_requests"
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    req_type = db.Column(db.String(120), nullable=False)  # نوع الطلب
-    req_status = db.Column(db.String(50), nullable=False, default="pending")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey("app_users.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    user = db.relationship("AppUser", backref="requests")
-
-# ---------------- وظائف مساعدة ----------------
-def ensure_db():
-    """إنشاء الجداول + إضافة مستخدم/بيانات تجريبية لو كانت القاعدة جديدة."""
-    first_time = not os.path.exists(DB_PATH)
-    db.create_all()
-    if first_time:
-        # مستخدم تجريبي
-        u = AppUser(name="مدير النظام", email="admin@example.com", password="1234")
-        db.session.add(u)
-        # 4 طلبات بأربع حالات
-        samples = [
-            AppRequest(title="تقرير لجنة المياه - حي الندى", req_type="لجنة المياه", req_status="under_review", user=u),
-            AppRequest(title="تحليل المياه - بئر 18", req_type="تحليل المياه", req_status="approved", user=u),
-            AppRequest(title="اعتراض نتيجة التحليل", req_type="تحليل المياه", req_status="rejected", user=u),
-            AppRequest(title="طلب فحص بئر مزرعة الشمال", req_type="فحص المياه", req_status="pending", user=u),
-        ]
-        db.session.add_all(samples)
-        db.session.commit()
-
-def login_required(view_func):
-    @wraps(view_func)
-    def wrapper(*args, **kwargs):
-        if "uid" not in session:
-            return redirect(url_for("login"))
-        return view_func(*args, **kwargs)
-    return wrapper
-
-@app.context_processor
-def inject_now():
-    return {"now": datetime.utcnow, "theme": THEME}
-
-# ---------------- السبلاش ----------------
-@app.route("/")
-def splash():
-    # لو مسجلة دخول روّح للهوم
-    if session.get("uid"):
-        return redirect(url_for("home"))
-    return render_template("splash.html", title="")
-
-# ---------------- تسجيل الدخول/الخروج ----------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
-        password = (request.form.get("password") or "").strip()
-        u = AppUser.query.filter_by(email=email, password=password).first()
-        if u:
-            session["uid"] = u.id
-            session["uname"] = u.name
-            flash("تم تسجيل دخولك", "ok")
-            return redirect(url_for("home"))
-        flash("بيانات الدخول غير صحيحة", "bad")
-        return redirect(url_for("login"))
-    return render_template("login.html", title="تسجيل الدخول", hide_nav=True)
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("تم تسجيل الخروج", "ok")
-    return redirect(url_for("login"))
-
-# ---------------- الرئيسية ----------------
-@app.route("/home")
-@login_required
-def home():
-    # إحصائيات الحالات
-    qset = AppRequest.query.order_by(AppRequest.created_at.desc())
-    items = qset.all()
-    c = Counter([r.req_status for r in items])
-    counters = {
-        "total": len(items),
-        "pending": c.get("pending", 0),
-        "under_review": c.get("under_review", 0),
-        "approved": c.get("approved", 0),
-        "rejected": c.get("rejected", 0),
-    }
-
-    # بيانات الأشهر (تجريبية صفرية إن ما فيه باك إند يرسلها)
-    monthly_labels = [str(i) for i in range(1, 13)]
-    monthly_values = [0]*12  # غيّريها لاحقًا لو صار عندك بيانات شهرية
-
-    return render_template(
-        "home.html",
-        title="الرئيسية",
-        counters=counters,
-        items=items,
-        monthly_labels=monthly_labels,
-        monthly_values=monthly_values,
-    )
-
-# ---------------- صفحات إضافية (اختياري) ----------------
-@app.route("/archive")
-@login_required
-def archive():
-    items = AppRequest.query.order_by(AppRequest.created_at.desc()).all()
-    return render_template("archive.html", title="الأرشيف", items=items)
-
-@app.route("/status")
-def status_page():
-    # القوائم الثابتة لخيارات الفلاتر
-    req_types  = ["تحليل المياه", "فحص المياه", "تقرير لجنة المياه"]
-    statuses   = [
-        ("",             "الكل"),
-        ("pending",      "معلّقة"),
-        ("under_review", "قيد المراجعة"),
-        ("approved",     "مقبولة"),
-        ("rejected",     "مرفوضة"),
-    ]
-
-    # خرائط للعرض و الـ CSS بدون if/elif داخل القالب
-    status_label = {
-        "pending":      "معلّقة",
-        "under_review": "قيد المراجعة",
-        "approved":     "مقبولة",
-        "rejected":     "مرفوضة",
-    }
-    status_class = {
-        "pending":      "badge pending",
-        "under_review": "badge under_review",
-        "approved":     "badge approved",
-        "rejected":     "badge rejected",
-    }
-
-    # قراءة فلاتر الاستعلام
-    s = (request.args.get("status") or "").strip()
-    t = (request.args.get("type")   or "").strip()
-    q = (request.args.get("q")      or "").strip()
-
-    # بناء الاستعلام
-    query = AppRequest.query
-    if s:
-        query = query.filter_by(req_status=s)
-    if t:
-        query = query.filter_by(req_type=t)
-    if q:
-        query = query.filter(AppRequest.title.contains(f"%{q}%"))
-
-    items = query.order_by(AppRequest.created_at.desc()).all()
-
-    # تجهيز صفوف جاهزة للعرض (بدون شروط في القالب)
-    rows = []
-    for r in items:
-        rows.append({
-            "title":        r.title,
-            "req_type":     r.req_type,
-            "status_key":   r.req_status,
-            "status_label": status_label.get(r.req_status, "غير معروفة"),
-            "status_class": status_class.get(r.req_status, "badge"),
-            "created_at":   r.created_at,
-        })
-
-    return render_template(
-        "status.html",
-        title="حالة الطلب",
-        req_types=req_types,
-        selected_status=s,
-        selected_type=t,
-        q=q,
-        rows=rows
-    )
-
-
-# ---------------- إضافة طلب ----------------
-@app.route("/add", methods=["GET", "POST"], endpoint="add_request")
-@login_required
-def add_request():
-    # القوائم المعروضة في الفorm
-    req_types = [
-        "تحليل المياه",
-        "تقرير لجنة المياه",
-        "طلب فحص المياه",
-        "اعتراض نتيجة التحليل",
-    ]
-    districts = ["الريان", "الندى", "الياسمين", "الملقى", "أخرى"]
-
-    if request.method == "POST":
-        # قراءات الـ form
-        req_type = (request.form.get("req_type") or "").strip()
-        district = (request.form.get("district") or "").strip()
-        district_other = (request.form.get("district_other") or "").strip()
-        salt_cat = (request.form.get("salt_cat") or "").strip()
-        details = (request.form.get("details") or "").strip()
-
-        # إلزاميات بسيطة
-        if not req_type or not district:
-            flash("الرجاء اختيار نوع الطلب والحي.", "bad")
-            return redirect(url_for("add_request"))
-
-        # لو اختارت "أخرى" استخدم النص المكتوب
-        district_final = district_other.strip() if district == "أخرى" and district_other else district
-
-        # عنوان تلقائي إذا ما وصل عنوان مخفي من الواجهة
-        title = (request.form.get("title") or "").strip()
-        if not title:
-            title = f"{req_type} - حي {district_final}" if req_type and district_final else (req_type or district_final or "طلب")
-
-        # إنشاء السجل
-        new_r = AppRequest(
-            title=title,
-            req_type=req_type,
-            req_status="pending",
-            user_id=session.get("uid"),
-        )
-
-        # حفظ الحقول الإضافية فقط لو الأعمدة موجودة في الموديل
-        optional_fields = {
-            "district": district_final,
-            "salt_cat": salt_cat or None,
-            "details": details or None,
-        }
-        for col, val in optional_fields.items():
-            if hasattr(AppRequest, col):
-                setattr(new_r, col, val)
-
-        # حفظ في الداتابيس
-        db.session.add(new_r)
-        db.session.commit()
-
-        flash("تمت إضافة الطلب بنجاح.", "ok")
-        return redirect(url_for("home"))
-
-    # GET
-    return render_template("add.html", title="إضافة طلب", req_types=req_types, districts=districts)
 # ---------------- تشغيل ----------------
 if __name__ == "__main__":
     with app.app_context():

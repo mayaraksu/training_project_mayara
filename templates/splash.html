@@ -1,33 +1,35 @@
 {% extends "base.html" %}
+{% set is_auth = True %}          {# يخفي الشريط العلوي #}
 {% set body_class = "splash-page" %}
 
 {% block content %}
 <style>
-  .splash-wrap{min-height:calc(100vh - 140px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;text-align:center}
-  .splash-logo{width:120px;height:120px;object-fit:contain}
-  .splash-title{font-size:20px;font-weight:700}
-  .splash-sub{color:#666}
-  .spinner{width:34px;height:34px;border-radius:50%;border:3px solid #e5e5e5;border-top-color:#166534;animation:spin 0.9s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
+  .splash-wrap{
+    min-height: calc(100vh - 0px);
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+  }
+  .splash-card{
+    text-align: center;
+  }
+  .splash-card img{ width: 260px; height: 260px; display:block; margin: 0 auto 16px; }
+  .splash-title{ font-weight: 700; font-size: 22px; margin: 0 0 6px; color:#0f5f28; }
+  .splash-sub{ color:#666; font-size:14px; }
 </style>
 
 <div class="splash-wrap">
-  <img src="{{ url_for('static', filename='logo7.png') }}" alt="شعار" class="splash-logo">
-  <div class="splash-title">وزارة البيئة والمياه والزراعة</div>
-  <div class="splash-sub">جارٍ التحميل…</div>
-  <div class="spinner" aria-hidden="true"></div>
-
-  <noscript>
-    <p style="margin-top:12px">
-      الجافاسكربت معطل — <a href="{{ url_for('auth_choose') }}">اضغط للمتابعة</a>
-    </p>
-  </noscript>
+  <div class="splash-card">
+    <img src="{{ url_for('static', filename='logonum1.png') }}" alt="شعار">
+    <div class="splash-title">وزارة البيئة والمياه والزراعة</div>
+    <div class="splash-sub">نظام إدارة فحوص المياه</div>
+  </div>
 </div>
 
 <script>
-  // تحويل تلقائي بعد 1500ms
-  setTimeout(function(){
+  // تحويل تلقائي لصفحة اختيار نوع الدخول بعد ثانيتين
+  setTimeout(function () {
     window.location.href = "{{ url_for('auth_choose') }}";
-  }, 1500);
+  }, 2000);
 </script>
 {% endblock %}

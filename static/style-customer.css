@@ -183,22 +183,37 @@
 .brand,
 .brand span{ color:var(--brand); }
 
-/* روابط الشريط: خط سفلي أخضر دايم + إبراز عند المرور/التفعيل */
-.customer-navbar .nav-link{
-  position:relative;
-  padding-bottom:8px;
-  text-decoration:none;
-  color:#222;
-  border-bottom:2px solid rgba(15,95,40,.25); /* خط أخضر خفيف أسفل كل عنوان */
+.customer-navbar .nav-link {
+  position: relative;
+  padding-bottom: 8px;
+  text-decoration: none;
+  color: #222;
+  border-bottom: none;        /* لا تضيف خط افتراضياً */
 }
-.customer-navbar .nav-link:hover,
-.customer-navbar .nav-link:focus{
+
+/* التسطير فقط لروابط القائمة اليمنى */
+.customer-navbar .nav-right .nav-link {
+  border-bottom: 2px solid rgba(15,95,40,.25);
+}
+
+/* عند التحويم أو التركيز */
+.customer-navbar .nav-right .nav-link:hover,
+.customer-navbar .nav-right .nav-link:focus {
   border-bottom-color: var(--brand);
 }
-.customer-navbar .nav-link.active{
-  color:var(--brand);
-  font-weight:700;
+
+/* عند تفعيل الرابط */
+.customer-navbar .nav-right .nav-link.active {
+  color: var(--brand);
+  font-weight: 700;
   border-bottom-color: var(--brand);
+}
+
+/* اسم المشروع يبقى بدون خط */
+.customer-navbar .brand,
+.customer-navbar .brand.nav-link {
+  border-bottom: none !important;
+  text-decoration: none !important;
 }
 
 /* أيقونات الشريط تبقى مثل ما كانت */
@@ -397,3 +412,114 @@ body.dark .badge.rejected{background:#2a0f0f;border-color:#5c1f1f;color:#f2a2a2}
   text-decoration: underline;
 }
 
+.account-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 400px;
+}
+
+.account-fields label {
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+.account-fields input[readonly] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f9f9f9;  /* يظهر أن الحقل ثابت */
+  color: #222;
+}
+.account-box {
+  display: grid;
+  gap: 12px;           /* المسافة بين العناصر */
+  max-width: 360px;
+}
+
+.field label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.field input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f9f9f9;
+  font-size: 15px;
+}
+
+.btn-delete {
+  background: #d22;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: fit-content;   /* الزر على قد النص */
+}
+.btn-delete:hover {
+  background: #b11;
+}
+.account-form {
+  max-width: 320px;   /* أو أي قياس يناسبك */
+  margin: 0 auto;     /* يوسّط الحقول داخل البانيل */
+}
+
+.account-form .field input {
+  width: 100%;        /* يملأ المساحة اللي فوق (320px) */
+  padding: 8px 12px;
+  font-size: 15px;
+}
+.project-title {
+  text-decoration: none;
+}
+body.dark-mode {
+  background: #f0f0f0;       /* خلفية رمادي فاتح */
+  color: #222;               /* النص أسود غامق */
+}
+
+/* الكروت */
+body.dark-mode .card {
+  background: #ffffff;       /* أبيض صريح للكروت */
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* روابط النافبار */
+body.dark-mode .nav-link {
+  color: #333;
+}
+
+body.dark-mode .nav-link.active {
+  color: #ff9800;           /* برتقالي للرابط النشط */
+  border-bottom: 2px solid #ff9800;
+}
+
+/* النصوص داخل الكروت */
+body.dark-mode .mini-card-head,
+body.dark-mode .mini-card-value {
+  color: #000;
+}
+
+/* الأزرار */
+body.dark-mode button {
+  background: #ff9800;      /* برتقالي */
+  color: #fff;
+  border: none;
+}
+
+body.dark-mode button:hover {
+  background: #e68900;
+}
+
+/* الدونات */
+body.dark-mode #statusDonut {
+  background: transparent;
+}

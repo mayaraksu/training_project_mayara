@@ -1,109 +1,131 @@
-{% extends "customer_base.html" %}
-{% set body_class = "customer-home-page" %}
-
-{% block title %}الرئيسية{% endblock %}
-
+{% extends "base.html" %}
 {% block content %}
-<div class="dashboard" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
 
-  <section class="card">
-    <div class="card-head" style="justify-content: space-between; align-items:center;">
-      <h3 style="margin:0">آخر الطلبات</h3>
-      <a class="link" href="{{ url_for('customer_requests_status') }}">عرض الكل</a>
-    </div>
+<style>
+  .cards-wrap{
+    max-width: 1080px;
+    margin: 8px auto 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .card{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:18px;
+    min-height:240px;
+  }
+  .card h3{
+    margin:0 0 12px;
+    font-size:16px;
+  }
+  .donut-box{
+    min-height:240px;
+    display:grid;
+    place-items:center;
+  }
 
-    <div class="stats-strip" dir="rtl">
-      <div class="stat">
-        <div class="stat-title">إجمالي الطلبات</div>
-        <div class="stat-number">{{ counts.total }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">تحت المراجعة</div>
-        <div class="stat-number">{{ counts.under_review }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">مقبولة</div>
-        <div class="stat-number">{{ counts.approved }}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">مرفوضة</div>
-        <div class="stat-number">{{ counts.rejected }}</div>
-      </div>
-    </div>
-  </section>
+  /* مربعات “آخر الطلبات” */
+  .mini-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:14px;
+  }
+  .mini-card{
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:12px;
+    text-align:center;
+    background:#fff;
+  }
+  .mini-card-head{ color:#6b7280; font-size:13px; margin-bottom:6px }
+  .mini-card-value{ font-weight:700; font-size:20px }
 
-  <!-- بطاقة توزيع الحالات (الدونات و/أو الليجند) -->
-<div class="card card-list">
-  <div class="card-head">
+  /* وسائط صغيرة */
+  @media (max-width: 900px){
+    .cards-wrap{ grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="cards-wrap">
+
+  <!-- توزيع الحالات -->
+  <div class="card">
     <h3>توزيع الحالات</h3>
+    <div class="donut-box">
+      <canvas id="statusDonut" width="280" height="280"></canvas>
+    </div>
   </div>
-  <div class="card-body" style="text-align:center; min-height:300px;">
-    <canvas id="statusChart" style="max-height:200px;"></canvas>
+
+  <!-- آخر الطلبات -->
+  <div class="card">
+    <h3>آخر الطلبات</h3>
+
+    <div class="mini-grid">
+      <!-- إجمالي الطلبات = قيد المراجعة -->
+      <div class="mini-card">
+        <div class="mini-card-head">إجمالي الطلبات</div>
+        <div class="mini-card-value">{{ counts.under_review or 0 }}</div>
+      </div>
+
+      <div class="mini-card">
+        <div class="mini-card-head">قيد المراجعة</div>
+        <div class="mini-card-value">{{ counts.under_review or 0 }}</div>
+      </div>
+
+      <div class="mini-card">
+        <div class="mini-card-head">مقبولة</div>
+        <div class="mini-card-value">{{ counts.approved or 0 }}</div>
+      </div>
+
+      <div class="mini-card">
+        <div class="mini-card-head">مرفوضة</div>
+        <div class="mini-card-value">{{ counts.rejected or 0 }}</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // القيم القادمة من الباك
-    const underReview = {{ counts['under_review']|default(0)|int }};
-    const approved    = {{ counts['approved']|default(0)|int }};
-    const rejected    = {{ counts['rejected']|default(0)|int }};
-    const total = underReview + approved + rejected;
+  (function () {
+    const u = {{ counts.under_review or 0 }};
+    const a = {{ counts.approved or 0 }};
+    const r = {{ counts.rejected or 0 }};
 
-    const ctx = document.getElementById('statusChart').getContext('2d');
-
-    // بيانات الرسم
-    const chartData = total === 0
-      ? {
-          labels: ['لا توجد بيانات'],
-          datasets: [{
-            data: [1],
-            backgroundColor: ['#e5e7eb']
-          }]
-        }
-      : {
-          labels: ['قيد المراجعة', 'مقبولة', 'مرفوضة'],
-          datasets: [{
-            data: [underReview, approved, rejected],
-            backgroundColor: ['#FFA500', '#28a745', '#dc3545'], // برتقالي، أخضر، أحمر
-            borderWidth: 1
-          }]
-        };
+    const ctx = document.getElementById('statusDonut');
+    if (!ctx) return;
 
     new Chart(ctx, {
       type: 'doughnut',
-      data: chartData,
+      data: {
+        labels: ['قيد المراجعة','مقبولة','مرفوضة'],
+        datasets: [{
+          data: [u, a, r],
+          // ألوان: برتقالي، أخضر، أحمر
+          backgroundColor: ['#f59e0b', '#16a34a', '#dc2626'],
+          borderColor: ['#ffffff','#ffffff','#ffffff'],
+          borderWidth: 2
+        }]
+      },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
         cutout: '60%',
         plugins: {
           legend: {
-            display: true,
-            position: 'bottom',  // عرض الألوان والأسماء تحت الدونات
-            labels: {
-              usePointStyle: true,
-              padding: 16,
-              font: { size: 14 },
-              rtl: true,           // ترتيب لليمين
-              textAlign: 'right'
-            }
+            position: 'bottom',
+            labels: { usePointStyle: true, boxWidth: 8 }
           },
-          tooltip: {
-            callbacks: {
-              label: function (ctx) {
-                // عرض القيمة بجانب الاسم
-                return ctx.label + ': ' + (total === 0 ? 0 : ctx.parsed);
-              }
-            }
-          }
+          tooltip: { rtl: true, bodyFont: { family: 'system-ui' } }
         }
       }
     });
-  });
+  })();
 </script>
 
+
+
 {% include 'partials_footer_customer.html' %}
-</div>
 {% endblock %}

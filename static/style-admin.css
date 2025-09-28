@@ -1,0 +1,46 @@
+#==========for_admin======
+* بطاقات الطلب */
+.req-list{ display: grid; gap: 12px; }
+.req-card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:14px; }
+html.dark .req-card{ background:#111; border-color:#222; }
+
+/* الشريط العلوي لكل بطاقة */
+.req-top{ display:flex; align-items:center; gap:10px; }
+.req-code{ font-weight:700; color:#1f2937; }
+.req-date{ margin-inline-start:auto; font-size:12px; color:#6b7280; }
+html.dark .req-code{ color:#e5e7eb; }
+html.dark .req-date{ color:#9ca3af; }
+
+/* معلومات الطلب */
+.req-meta{ display:grid; gap:4px; margin-top:8px; font-size:14px; color:#374151; }
+.req-meta strong{ color:#111827; }
+html.dark .req-meta{ color:#e5e7eb; }
+html.dark .req-meta strong{ color:#fff; }
+
+/* النقطة الملوّنة */
+.status-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+.status-dot.yellow{ background:#f59e0b; }   /* قيد المراجعة */
+
+/* الأزرار */
+.req-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+
+.btn-approve,
+.btn-reject{
+  padding:10px 14px;
+  border-radius:8px;
+  border:0;
+  font-weight:600;
+  cursor:pointer;
+  transition:transform .04s ease, filter .15s ease;
+}
+
+.btn-approve{ background:#16a34a; color:#fff; }   /* أخضر */
+.btn-approve:hover{ filter:brightness(.95); }
+.btn-approve:active{ transform:translateY(1px); }
+
+.btn-reject{ background:#dc2626; color:#fff; }    /* أحمر */
+.btn-reject:hover{ filter:brightness(.95); }
+.btn-reject:active{ transform:translateY(1px); }
+
+/* فراغ فارغ */
+.empty{ text-align:center; color:#6b7280; padding:22px 0; }

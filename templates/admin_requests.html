@@ -1,0 +1,184 @@
+{% extends "admin_base.html" %}
+{% set is_admin = True %}
+
+{% block title %}إدارة الطلبات{% endblock %}
+
+{% block content %}
+
+<style>
+  .page-title{margin:0 0 12px;font-size:22px}
+  .glass{background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.08);border-radius:14px}
+  html.dark .glass{background:rgba(16,18,20,.65);border-color:rgba(255,255,255,.12)}
+  .section-card{max-width:1000px;margin:0 auto;padding:14px}
+
+  .acc-item.open .acc-body{display:block}
+  .acc-head{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
+  .acc-body{display:block;padding:0 12px 12px}
+  .muted{color:var(--muted,#667085)}
+
+  .req-list{display:flex;flex-direction:column;gap:10px}
+  .req-card{padding:12px}
+  .req-top{display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .req-code{font-weight:700;color:#065a3b}
+
+  .status-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .status-dot.yellow{background:#f59e0b}
+  .status-dot.green{background:#16a34a}
+  .status-dot.red{background:#dc2626}
+
+  .req-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-top:8px}
+  @media (max-width:640px){.req-meta{grid-template-columns:1fr}}
+  .req-meta > div strong{margin-inline-start:.25rem}
+
+  .req-actions{display:flex;gap:8px;margin-top:10px}
+  .btn-approve,.btn-reject,.btn-send-reject,.btn-cancel-reject{
+    padding:7px 14px;border:0;border-radius:10px;cursor:pointer;font-size:14px
+  }
+  .btn-approve{background:#1f9254;color:#fff}
+  .btn-approve:hover{background:#177d46}
+  .btn-reject{background:#cc3a3a;color:#fff}
+  .btn-reject:hover{background:#b23131}
+
+  .reject-box{
+    display:none; margin-top:10px; padding:10px; border:1px solid rgba(0,0,0,.12);
+    border-radius:10px; background:#fff
+  }
+  html.dark .reject-box{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18)}
+  .reject-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .reject-head span{font-weight:700}
+  .reject-close{background:transparent;border:0;font-size:20px;line-height:1;cursor:pointer;color:#666}
+  .reject-text{
+    width:100%;border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:8px;font-size:14px;background:#fff
+  }
+  html.dark .reject-text{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.25)}
+  .reject-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+  .btn-cancel-reject{background:#e5e7eb;color:#222}
+  .btn-cancel-reject:hover{background:#dcdfe4}
+</style>
+
+<h2 class="page-title">إدارة الطلبات</h2>
+
+<div class="section-card glass">
+  <div class="acc-item open">
+    <div class="acc-head" data-acc="head">
+      <span class="acc-arrow">▾</span>
+      <span>الطلبات قيد المراجعة <span class="muted">({{ pending|length or 0 }})</span></span>
+    </div>
+
+   <div class="acc-body" data-acc="body">
+  {% if pending and pending|length > 0 %}
+    <div class="req-list">
+
+      {% for r in pending %}
+        {# خرائط نص الحالة واللون #}
+        {% set status_map = {'under_review':'قيد المراجعة', 'accepted':'مقبول', 'rejected':'مرفوض'} %}
+        {% set color_map  = {'under_review':'yellow',        'accepted':'green',  'rejected':'red'} %}
+        {% set status_text = status_map.get(r.status, '-') %}
+        {% set dot_class   = color_map.get(r.status, '') %}
+
+        <div class="req-card glass" id="req-{{ r.id }}">
+          <div class="req-top">
+            <span class="req-code"><strong>رقم الطلب:</strong> #{{ r.id }}</span>
+            <span class="muted">
+              <span class="status-dot {{ dot_class }}"></span>
+              <span style="margin-inline-start:6px">{{ status_text }}</span>
+            </span>
+          </div>
+
+          <div class="req-meta">
+            <div><strong>التاريخ:</strong> {{ r.created_at.strftime("%Y-%m-%d") if r.created_at else "" }}</div>
+            <div><strong>الطلب:</strong> {{ r.request_type }}</div>
+            {% if r.notes %}<div><strong>ملاحظات:</strong> {{ r.notes }}</div>{% endif %}
+            {% if r.district %}<div><strong>الحي:</strong> {{ r.district }}</div>{% endif %}
+            <div><strong>الحالة الحالية:</strong> {{ status_text }}</div>
+          </div>
+
+          {% if r.status == 'rejected' and r.decision_reason %}
+            <div class="alert" style="margin-top:8px;padding:10px;border-radius:8px;background:#fee2e2;color:#991b1b">
+              <strong>تم رفض الطلب.</strong>
+              <div>السبب: {{ r.decision_reason }}</div>
+            </div>
+          {% endif %}
+
+          <div class="req-actions">
+            <button type="button" class="btn-approve" data-id="{{ r.id }}"
+                    onclick="approveRequest({{ r.id }}, this)">قبول</button>
+            <button type="button" class="btn-reject"  data-id="{{ r.id }}"
+                    onclick="toggleRejectBox({{ r.id }}, true)">رفض</button>
+          </div>
+
+          <div class="reject-box" id="reject-{{ r.id }}">
+            <div class="reject-head">
+              <span>سبب الرفض</span>
+              <button class="reject-close" aria-label="إغلاق"
+                      onclick="toggleRejectBox({{ r.id }}, false)">×</button>
+            </div>
+            <textarea class="reject-text" placeholder="اكتبي سبب الرفض المختصر..." rows="3"></textarea>
+            <div class="reject-actions">
+              <button type="button" class="btn-send-reject" data-id="{{ r.id }}"
+                      onclick="rejectRequest({{ r.id }}, this)">تأكيد الرفض</button>
+              <button type="button" class="btn-cancel-reject" data-id="{{ r.id }}"
+                      onclick="toggleRejectBox({{ r.id }}, false)">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+    </div>
+  {% else %}
+    <div class="muted" style="padding:18px;text-align:center">لا توجد طلبات حالياً</div>
+  {% endif %}
+</div>
+<script>
+  function toggleRejectBox(id, show){
+    const box = document.getElementById(`reject-${id}`);
+    if(!box) return;
+    box.style.display = show ? 'block' : 'none';
+  }
+
+  async function approveRequest(id, btn){
+    try {
+      btn.disabled = true;
+      const res = await fetch(`/admin/requests/${id}/approve`, { method:'POST' });
+      const js  = await res.json().catch(()=>({ok:false}));
+      if(res.ok && js.ok){
+        document.getElementById(`req-${id}`)?.remove();
+      } else {
+        alert(js.error || 'حدث خطأ أثناء تحديث الحالة');
+      }
+    } catch(e){
+      alert('تعذّر الاتصال بالسيرفر');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function rejectRequest(id, btn){
+    const box = document.getElementById(`reject-${id}`);
+    const reason = (box.querySelector('.reject-text')?.value || '').trim();
+    if(!reason){ alert('اكتبي سبب الرفض'); return; }
+
+    try {
+      btn.disabled = true;
+      const res = await fetch(`/admin/requests/${id}/reject`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({reason})
+      });
+      const js  = await res.json().catch(()=>({ok:false}));
+      if(res.ok && js.ok){
+        document.getElementById(`req-${id}`)?.remove();
+      } else {
+        alert(js.error || 'حدث خطأ أثناء تحديث الحالة');
+      }
+    } catch(e){
+      alert('تعذّر الاتصال بالسيرفر');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+</script>
+{# IMPORTANT: إذا كان ملفك يبدأ بـ {% block content %} فتأكدي إنك تقفليه هنا #}
+{% endblock %}
+  </div>
+</div>

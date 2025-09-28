@@ -1,5 +1,9 @@
+from email.policy import default
+
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+
+from sqlalchemy.orm import synonym
 
 db = SQLAlchemy()
 
@@ -36,8 +40,10 @@ class RequestModel(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"))
     title = db.Column(db.String(200))
     district = db.Column(db.String(100))
-    request_type = db.Column(db.String(100))
-    status = db.Column(db.String(20), default="pending")  # pending/approved/rejected/under_review
-    notes = db.Column(db.Text)
+    notes = db.Column(db.Text, nullable=True, default="")
+    status = db.Column(db.String(20), nullable=False, default="under_review", server_default="under_review")
     tracking_code = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    request_type = synonym("title")
+    # ⬇️ هذا هو الحقل الصحيح
+    rejected_reason = db.Column(db.Text, nullable=True)   # ← لا تكتب reject_reason

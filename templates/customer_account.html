@@ -1,102 +1,127 @@
 {% extends "customer_base.html" %}
-{% set body_class = "customer-request-new" %}
+{% set body_class = "customer-account-page" %}
 {% block title %}حسابي{% endblock %}
-
-
 {% block content %}
 <style>
-  /* نفس تنسيق البطاقات والحقول لكلا القسمين */
-  .page-container{max-width:1100px;margin:24px auto;padding:0 8px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .page-container{max-width:1100px;margin:24px auto;padding:0 16px}
+  .alerts{margin-bottom:16px}
+  .alert{padding:10px 12px;border-radius:10px;margin:8px 0;font-size:14px}
+  .alert-success{background:#e6f7ed;color:#135f33;border:1px solid #c8ebd6}
+  .alert-danger{background:#fdecec;color:#7a0b0b;border:1px solid #f7c9c9}
 
-  .card{background:#fff;border:1px solid #eaeaea;border-radius:12px}
-  .card-head{padding:14px 18px;border-bottom:1px solid #f0f0f0}
-  .card-head h3{margin:0}
-  .card-body{padding:18px}
+  .account-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:24px;
+    align-items:start;
+  }
 
-  .form-group{margin-bottom:16px}
-  .form-label{display:block;margin-bottom:6px;font-weight:600}
-  .input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
-  .input[readonly]{color:#222;background:#f6f6f6}
+  .panel{
+    background:#fff;
+    border:1px solid #e9ecef;
+    border-radius:14px;
+    padding:18px 16px;
+    box-shadow:0 6px 18px rgba(0,0,0,.05);
+  }
+  .panel h3{margin:0 0 14px;font-size:18px}
 
-  .actions{display:flex;gap:10px;margin-top:10px}
-  .btn-green{background:#166534;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}
-  .btn-green:hover{filter:brightness(1.05)}
-  .btn-danger{background:#b72b2b;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}
+  .account-form{display:grid;gap:12px}
+  .field{display:grid;gap:6px}
+  .field label{font-size:13px;color:#6b7280}
+  .field input[type="text"],
+  .field input[type="email"],
+  .field input[type="password"]{
+    width:100%;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:10px 12px;
+    font-size:15px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .field input:focus{
+    border-color:#c7e6d5;
+    box-shadow:0 0 0 4px rgba(22,101,52,.18);
+  }
+  /* حقول العرض فقط */
+  .ro{background:#f9fafb;color:#111;border-color:#e5e7eb}
+  .ro:read-only{cursor:not-allowed}
 
-  .alert{padding:10px 12px;border-radius:8px;margin-bottom:12px}
-  .alert-success{background:#e9f7ef;color:#166534}
-  .alert-danger{background:#fdecea;color:#b00020}
+  .actions-row{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:4px}
+
+  .btn{appearance:none;border:none;cursor:pointer;border-radius:10px;padding:10px 16px;font-weight:700}
+  .btn-primary{background:#166534;color:#fff;box-shadow:0 8px 20px rgba(22,101,52,.18)}
+  .btn-primary:hover{filter:brightness(.95)}
+  .btn-delete{background:#d92d20;color:#fff}
+  .btn-delete:hover{filter:brightness(.95)}
+
+  @media (max-width: 900px){
+    .account-grid{grid-template-columns:1fr}
+  }
 </style>
 
 <div class="page-container">
 
-  {# رسائل فورية #}
-  {% with msgs = get_flashed_messages(with_categories=true) %}
-    {% if msgs %}
-      {% for cat, msg in msgs %}
-        <div class="alert {{ 'alert-success' if cat=='success' else 'alert-danger' }}">{{ msg }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+  <!-- رسائل التنبيه -->
+  <div class="alerts">
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        {% for cat, msg in msgs %}
+          <div class="alert {{ 'alert-success' if cat=='success' else 'alert-danger' }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
 
-  <div class="grid">
+  <div class="account-grid">
 
-    <!-- معلومات الحساب -->
-    <div class="card">
-      <div class="card-head"><h3>معلومات الحساب</h3></div>
-      <div class="card-body">
-        <div class="form-group">
-          <label class="form-label">الاسم الكامل</label>
-          <input type="text" class="input" value="{{ customer.name }}" readonly>
+    <!-- يمين: معلومات الحساب -->
+    <section class="panel">
+      <h3>معلومات الحساب</h3>
+      <div class="account-form">
+        <div class="field">
+          <label>الاسم الكامل</label>
+          <input type="text" class="ro" value="{{ customer.full_name }}" readonly>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">البريد الإلكتروني</label>
-          <input type="text" class="input" value="{{ customer.email }}" readonly>
+        <div class="field">
+          <label>البريد الإلكتروني</label>
+          <input type="email" class="ro" value="{{ customer.email }}" readonly>
         </div>
 
-        <div class="form-group">
-          <button type="button" class="btn-danger" style="width:100%"
-                  onclick="if(confirm('هل أنت متأكد من حذف الحساب؟')){ window.location='{{ url_for('customer_account_delete') }}'; }">
-            حذف الحساب
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- الأمان -->
-    <div class="card">
-      <div class="card-head"><h3>الأمان</h3></div>
-      <div class="card-body">
-        <form method="post" action="{{ url_for('customer_account') }}">
-          <input type="hidden" name="action" value="password">
-
-          <div class="form-group">
-            <label class="form-label">كلمة المرور الحالية</label>
-            <input type="password" name="current_password" class="input" required>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">كلمة المرور الجديدة</label>
-            <input type="password" name="new_password" class="input" required minlength="8">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">تأكيد كلمة المرور الجديدة</label>
-            <input type="password" name="new_password2" class="input" required minlength="8">
-          </div>
-
-          <div class="form-group">
-            <button type="submit" class="btn-green" style="width:100%">تحديث كلمة المرور</button>
-          </div>
+        <!-- زر حذف الحساب تحت البريد -->
+        <form method="post" action="{{ url_for('customer_account_delete') }}"
+      class="actions-row"
+      onsubmit="return confirm('هل تريد حذف الحساب نهائيًا؟');">
+  <button type="submit" class="btn btn-delete">حذف الحساب</button>
         </form>
       </div>
-    </div>
+    </section>
+
+    <!-- يسار: الأمان (تغيير كلمة المرور) -->
+    <section class="panel">
+      <h3>الأمان</h3>
+      <form method="post" action="{{ url_for('customer_account') }}" class="account-form" autocomplete="off" novalidate>
+        <div class="field">
+          <label>كلمة المرور الحالية</label>
+          <input type="password" name="current_password" placeholder="كلمة المرور الحالية">
+        </div>
+        <div class="field">
+          <label>كلمة المرور الجديدة</label>
+          <input type="password" name="new_password" placeholder="كلمة المرور الجديدة">
+        </div>
+        <div class="field">
+          <label>تأكيد كلمة المرور الجديدة</label>
+          <input type="password" name="confirm_password" placeholder="تأكيد كلمة المرور الجديدة">
+        </div>
+        <div class="actions-row">
+          <button type="submit" class="btn btn-primary">تحديث كلمة المرور</button>
+        </div>
+      </form>
+    </section>
 
   </div>
 </div>
-
 {% include 'partials_footer_customer.html' %}
 {% endblock %}

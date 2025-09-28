@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+{% set is_auth = True %}
+{% if is_auth %}{% include "partials_footer_auth.html" %}{% endif %}
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
@@ -12,108 +13,91 @@
 
   <style>
     :root{
-      --primary:#1d84c7;          /* سماوي أساسي */
-      --primary-hover:#15669a;
-      --muted:#475569;
-      --text:#0f172a;
-      --card-bg:rgba(255,255,255,.72);
-      --blur:12px;
-      --shadow:0 10px 30px rgba(2,6,23,.15);
-      --ring:rgba(29,132,199,.35);
-      --radius:16px;
-      --field-bg:#ffffff;
-      --field-bd:#e2e8f0;
-      --field-bd-focus:#bcd9ec;
-      --danger:#d92d20;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:"Cairo",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(80vw 80vw at 90% -10%, rgba(14,165,233,.25), transparent 60%),
-        radial-gradient(70vw 70vw at -10% 110%, rgba(34,197,94,.20), transparent 60%),
-        linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-      display:flex;align-items:center;justify-content:center;
-      padding:24px;
-    }
+    --brand:#166534;            /* أخضر الزر */
+    --glass-bg: rgba(255,255,255,.85);
+    --ring: rgba(22,101,52,.18);
+  }
 
-    .card{
-      width:min(540px, 96vw);
-      background:var(--card-bg);
-      -webkit-backdrop-filter:blur(var(--blur));
-      backdrop-filter:blur(var(--blur));
-      border:1px solid rgba(255,255,255,.6);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:28px 24px 22px;
-    }
+  html, body { height: 100%; margin: 0; }
 
-    .brand{
-      display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:10px;
-    }
-    .brand img{width:78px;height:auto;filter:drop-shadow(0 4px 10px rgba(2,6,23,.12))}
-    .brand h1{margin:6px 0 0;font-size:26px;font-weight:700}
+  /* خلفية + تمركز مركزي 100% */
+  body {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(rgba(255,255,255,.75), rgba(255,255,255,.75)),
+      url("{{ url_for('static', filename='backg.png') }}") center/cover no-repeat;
+    background-attachment: fixed;
+  }
 
-    form{margin-top:10px}
+  /* غلاف الكارد (لا مارجن نهائياً) */
+  .auth-shell { width: 100%; display: grid; place-items: center; }
 
-    .field{
-      display:flex;flex-direction:column;gap:6px;margin:12px 0;
-    }
-    label{font-weight:600;color:var(--muted);font-size:14px}
-    input[type="email"], input[type="password"]{
-      width:100%;
-      background:var(--field-bg);
-      border:1px solid var(--field-bd);
-      border-radius:12px;
-      padding:12px 14px;
-      font-size:16px;
-      outline:none;
-      transition:border-color .2s ease, box-shadow .2s ease;
-    }
-    input:focus{
-      border-color:var(--field-bd-focus);
-      box-shadow:0 0 0 4px var(--ring);
-    }
+  .auth-card{
+    position: relative;
+    width: min(520px, 92vw);
+    padding: 26px 22px 20px;
+    border-radius: 16px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 12px 28px rgba(0,0,0,.12);
+  }
 
-    .actions{
-      display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:6px;
-      flex-wrap:wrap;
-    }
+  /* شارة اللوقو: نص داخل ونص خارج */
+  .logo-badge{
+    position: absolute;
+    left: 50%;
+    top: 0;                          /* على حافة الكارد */
+    transform: translate(-50%, -50%);/* نصه برّا */
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    display: grid; place-items: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  }
+  .logo-badge img{
+    width: 60px; height: 60px; border-radius: 50%;
+    display: block;
+  }
 
-    .btn{
-      appearance:none;border:none;cursor:pointer;text-decoration:none;
-      font-weight:700;font-size:16px;letter-spacing:.2px;
-      padding:12px 16px;border-radius:12px;
-      transition:transform .08s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
-      box-shadow:0 6px 18px rgba(2,6,23,.08);
-      display:inline-flex;align-items:center;justify-content:center;gap:8px;
-      outline:none;
-    }
-    .btn:focus-visible{box-shadow:0 0 0 4px var(--ring), 0 6px 18px rgba(2,6,23,.08)}
+  h2.title{ text-align:center; margin: 30px 0 14px; }
 
-    .btn-primary{background:var(--primary);color:#fff}
-    .btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px)}
-    .btn-ghost{background:#fff;color:var(--muted);border:1px solid rgba(2,6,23,.08)}
-    .btn-ghost:hover{border-color:rgba(2,6,23,.18);transform:translateY(-1px)}
+  /* الحقول أصغر وعرضها مرتب */
+  form{ width: min(360px, 88vw); margin: 0 auto; display: grid; gap: 10px; }
+  .field{ display:grid; gap:6px; }
+  label{ font-size: 13px; color:#6b7280; font-weight:600 }
 
-    .flash{
-      display:flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:12px;font-size:14px;margin-top:10px;
-      border:1px solid #e2e8f0;background:#fff;color:#0f172a;
-    }
-    .flash.bad{border-color:#fecaca;background:#fff1f1;color:#7f1d1d}
-    .hint{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
-    .foot{margin-top:6px;text-align:center;color:#64748b;font-size:13px}
+  input[type="email"], input[type="password"]{
+    width: 100%;
+    background:#fff;                /* أبيض */
+    border:1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input:focus{
+    border-color:#c7e6d5;
+    box-shadow: 0 0 0 4px var(--ring);
+  }
 
-    /* حركة خفيفة */
-    .reveal{opacity:0;transform:translateY(8px);animation:up .36s ease forwards}
-    .reveal:nth-child(1){animation-delay:.02s}
-    .reveal:nth-child(2){animation-delay:.07s}
-    .reveal:nth-child(3){animation-delay:.12s}
-@keyframes up{to{opacity:1;transform:none}}
+  .form-buttons{
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    margin-top: 8px;
+  }
+  .btn-submit{
+    background: var(--brand); color:#fff; border:none; cursor:pointer;
+    padding:10px 16px; border-radius:10px; font-weight:700;
+    box-shadow: 0 8px 20px rgba(22,101,52,.18);
+  }
+  .btn-submit:hover{ filter:brightness(.95) }
+  .btn-back{
+    background:#fff; border:1px solid #e5e7eb; color:#444; text-decoration:none;
+    padding:10px 16px; border-radius:10px; font-weight:700;
+  }
   </style>
 </head>
 <body>
@@ -164,11 +148,11 @@
     <label>كلمة المرور</label>
     <input type="password" name="password" required placeholder="••••••••" autocomplete="new-password">
 
-    <div class="form-buttons">
-        <a href="/" class="btn-back">رجوع</a>
+   <div class="form-buttons">
+        <a href="{{ url_for('auth_choose') }}" class="btn-back">رجوع</a>
         <button type="submit" class="btn-submit">دخول</button>
-    </div>
-</form>
+      </div>
+    </form>
 </section>
 {% endblock %}
 </body>

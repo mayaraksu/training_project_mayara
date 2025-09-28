@@ -1,5 +1,8 @@
-{% extends "_policy_base.html" %}
-{% block doc %}
+{% extends "base.html" %}
+{% set is_auth = True %}
+{% set body_class = "auth-choose-page" %}
+{% if is_auth %}{% include "partials_footer_auth.html" %}{% endif %}
+{% block content %}
 <h1>تواصل معنا</h1>
 <p>يمكنك التواصل عبر القنوات الرسمية:</p>
 <ul>

@@ -67,10 +67,10 @@
             <tbody>
               {% for r in result %}
                 <tr>
-           <form method="post" action="{{ url_for('delete_request', req_id=r.id) }}" style="margin-top:6px">
-  <button type="submit" class="btn-delete" onclick="return confirm('هل أنت متأكد من حذف هذا الطلب؟');">
-    🗑️ حذف
-  </button>
+           <form method="post"
+      action="{{ url_for('customer_request_delete', req_id=r.id) }}"
+      onsubmit="return confirm('تأكيد حذف الطلب؟')">
+  <button type="submit" class="btn btn-danger"> 🗑️حذف</button>
 </form>
 
                   <td>{{ r.title }}</td>

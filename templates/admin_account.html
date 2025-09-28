@@ -1,0 +1,91 @@
+{% extends "admin_base.html" %}
+{% set is_admin = True %}
+
+{% block title %}حسابي{% endblock %}
+
+{% block content %}
+<style>
+    .account-page {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 30px;
+    }
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        width: 350px;
+    }
+    .card h3 {
+        margin-bottom: 15px;
+        font-size: 20px;
+        color: #444;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+    .form-group {
+        margin-bottom: 12px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    .form-group input {
+        width: 100%;
+        max-width:288px;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    .btn {
+        background: #1f9254;
+        color: #fff;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .btn:hover {
+        background: #177d46;
+    }
+</style>
+
+<div class="account-page">
+    <!-- معلومات الحساب -->
+    <div class="card">
+        <h3>معلومات الحساب</h3>
+        <div class="form-group">
+            <label>الاسم الكامل</label>
+            <input type="text" value="admin" readonly>
+        </div>
+        <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" value="admin@example.com" readonly>
+        </div>
+    </div>
+
+    <!-- الأمان -->
+    <div class="card">
+        <h3>الأمان</h3>
+        <div class="form-group">
+            <label>كلمة المرور الحالية</label>
+            <input type="password">
+        </div>
+        <div class="form-group">
+            <label>كلمة المرور الجديدة</label>
+            <input type="password">
+        </div>
+        <div class="form-group">
+            <label>تأكيد كلمة المرور الجديدة</label>
+            <input type="password">
+        </div>
+        <button class="btn">تحديث كلمة المرور</button>
+    </div>
+</div>
+{% endblock %}
